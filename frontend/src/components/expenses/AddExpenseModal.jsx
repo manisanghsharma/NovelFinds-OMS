@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 
 const AddExpenseModal = ({ isOpen, onClose, onSubmit, expenseCategories, paymentModes, editingExpense }) => {
+  const [isLoading, setIsLoading] = useState(false);
   const [expenseData, setExpenseData] = useState({
     date: new Date().toISOString().split('T')[0],
     category: expenseCategories[0],
@@ -18,7 +19,13 @@ const AddExpenseModal = ({ isOpen, onClose, onSubmit, expenseCategories, payment
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(expenseData);
+    setIsLoading(true);
+    try {
+      onSubmit(expenseData);
+    } catch (error) {
+      console.error('Error submitting expense:', error);
+      setIsLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -137,15 +144,24 @@ const AddExpenseModal = ({ isOpen, onClose, onSubmit, expenseCategories, payment
             <button
               type='button'
               onClick={onClose}
-              className='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors'
+              disabled={isLoading}
+              className='px-4 py-2 cursor-pointer border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             >
               Cancel
             </button>
             <button
               type='submit'
-              className='px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors'
+              disabled={isLoading}
+              className='px-4 py-2 cursor-pointer bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
             >
-              {editingExpense ? "Update Expense" : "Add Expense"}
+              {isLoading ? (
+                <>
+                  <Loader2 className='w-4 h-4 animate-spin' />
+                  {editingExpense ? "Updating..." : "Adding..."}
+                </>
+              ) : (
+                editingExpense ? "Update Expense" : "Add Expense"
+              )}
             </button>
           </div>
         </form>

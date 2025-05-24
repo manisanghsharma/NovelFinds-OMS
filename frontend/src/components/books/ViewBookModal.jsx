@@ -32,8 +32,8 @@ const ViewBookModal = ({ isOpen, onClose, book: initialBook }) => {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 flex justify-center items-center">
+      <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50">
+        <div className="bg-white m-5 rounded-lg shadow-xl w-full max-w-2xl p-6 flex justify-center items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700"></div>
         </div>
       </div>
@@ -44,8 +44,8 @@ const ViewBookModal = ({ isOpen, onClose, book: initialBook }) => {
   const bookData = book || initialBook;
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50">
+      <div className="bg-white m-5 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center border-b px-6 py-4 bg-gradient-to-r from-indigo-50 to-white">
           <h2 className="text-xl font-semibold text-gray-800">Book Details</h2>
           <button

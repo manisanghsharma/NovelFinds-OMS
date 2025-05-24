@@ -34,7 +34,7 @@ const Navbar = () => {
 		<nav className='bg-indigo-700 text-white'>
 			<div className='container mx-auto px-4'>
 				<div className='flex justify-between items-center py-4'>
-					<div className='flex items-center space-x-2'>
+					<div className='flex items-center space-x-2 cursor-pointer' onClick={() => navigate('/dashboard')}>
 						<img src={logo} alt="NovelFinds Logo" className='w-11 h-11 rounded-full' />
 						<span className='text-xl font-bold hidden sm:inline'>NovelFinds OMS</span>
 					</div>

@@ -21,11 +21,22 @@ const DeleteOrderModal = ({ isOpen, onClose, order }) => {
     }
   };
   
+  // Loading state
+  if (isLoading) {
+    return isOpen ? (
+      <div className='fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50'>
+        <div className='bg-white m-5 rounded-lg shadow-xl w-full max-w-md p-6 flex justify-center items-center'>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700'></div>
+        </div>
+      </div>
+    ) : null;
+  }
+
   if (!isOpen || !order) return null;
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+    <div className='fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50'>
+      <div className='bg-white m-5 rounded-lg shadow-xl w-full max-w-md'>
         <div className="flex justify-between items-center border-b px-6 py-4">
           <h2 className="text-xl font-semibold text-gray-800">Confirm Deletion</h2>
           <button
@@ -52,10 +63,8 @@ const DeleteOrderModal = ({ isOpen, onClose, order }) => {
             <button
               type="button"
               onClick={handleDelete}
-              disabled={isLoading}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center space-x-2 cursor-pointer"
             >
-              {isLoading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
               <span>Delete</span>
             </button>
           </div>

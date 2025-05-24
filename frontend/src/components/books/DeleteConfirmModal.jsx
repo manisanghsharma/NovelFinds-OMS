@@ -26,8 +26,8 @@ const DeleteConfirmModal = ({ isOpen, onClose, book }) => {
   if (!isOpen || !book) return null;
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+    <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50">
+      <div className="bg-white m-5 rounded-lg shadow-xl w-full max-w-md">
         <div className="flex justify-between items-center border-b px-6 py-4">
           <h2 className="text-xl font-semibold text-gray-800">Confirm Deletion</h2>
           <button
