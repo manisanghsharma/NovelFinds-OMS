@@ -45,37 +45,29 @@ const AdminLogin = () => {
 				{/* Background Pattern */}
 				<div className='absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none'></div>
 
-				{/* Header */}
-				{/* <header className='bg-indigo-700 text-white py-4 px-4 sm:px-6 lg:px-8 shadow-md z-10'>
-                <div className='container mx-auto flex justify-center items-center gap-2'>
-                    <BookOpen size={32} className="text-indigo-200" />
-                    <h1 className='text-2xl font-bold'>NovelFinds OMS</h1>
-                </div>
-            </header> */}
-
 				{/* Login Form */}
-				<div className='flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 relative z-10'>
+				<div className='flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-6 relative z-10'>
 					<div className='w-full max-w-md'>
-						<div className='bg-white rounded-xl shadow-xl p-8 border border-indigo-50 transform transition-all duration-300 hover:shadow-2xl'>
-							<div className='space-y-6'>
+						<div className='bg-white rounded-xl shadow-xl p-5 sm:p-8 border border-indigo-50 transform transition-all duration-300 hover:shadow-2xl'>
+							<div className='space-y-4 sm:space-y-6'>
 								{/* Logo in card */}
 								<div className='flex justify-center'>
 										<img
 											src={logo}
 											alt="NovelFinds Logo"
-											className='w-20 h-20 rounded-full'
+											className='w-16 h-16 sm:w-20 sm:h-20 rounded-full'
 										/>
 								</div>
 
-								<h2 className='text-2xl text-center font-bold text-gray-900 mt-4'>
+								<h2 className='text-xl sm:text-2xl text-center font-bold text-gray-900 mt-2 sm:mt-4'>
 									Admin Login
 								</h2>
 
-								<p className='text-center text-gray-500 text-sm'>
+								<p className='text-center text-gray-500 text-xs sm:text-sm'>
 									Enter your credentials to access the admin dashboard
 								</p>
 
-								<form onSubmit={handleSubmit} className='space-y-6 mt-8'>
+								<form onSubmit={handleSubmit} className='space-y-4 sm:space-y-6 mt-4 sm:mt-8'>
 									<div>
 										<label
 											htmlFor='username'
@@ -94,7 +86,7 @@ const AdminLogin = () => {
 												required
 												value={username}
 												onChange={(e) => setUsername(e.target.value)}
-												className='appearance-none block w-full pl-10 px-4 py-3 rounded-lg text-gray-900 bg-gray-50 border border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200'
+												className='appearance-none block w-full pl-10 px-4 py-2.5 sm:py-3 rounded-lg text-gray-900 bg-gray-50 border border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200'
 												placeholder='Enter your username'
 											/>
 										</div>
@@ -118,18 +110,18 @@ const AdminLogin = () => {
 												required
 												value={password}
 												onChange={(e) => setPassword(e.target.value)}
-												className='appearance-none block w-full pl-10 px-4 py-3 rounded-lg text-gray-900 bg-gray-50 border border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 pr-12'
+												className='appearance-none block w-full pl-10 px-4 py-2.5 sm:py-3 rounded-lg text-gray-900 bg-gray-50 border border-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 pr-12'
 												placeholder='Enter your password'
 											/>
 											<button
 												type='button'
 												onClick={() => setShowPassword(!showPassword)}
-												className='absolute cursor-pointer right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors'
+												className='absolute cursor-pointer right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors p-1.5'
 											>
 												{showPassword ? (
-													<EyeOff size={20} />
+													<EyeOff size={18} className="sm:w-5 sm:h-5" />
 												) : (
-													<Eye size={20} />
+													<Eye size={18} className="sm:w-5 sm:h-5" />
 												)}
 											</button>
 										</div>
@@ -138,12 +130,12 @@ const AdminLogin = () => {
 									<button
 										type='submit'
 										disabled={loading}
-										className='w-full py-3 cursor-pointer px-4 border border-transparent rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 disabled:opacity-50 text-lg font-medium transform hover:-translate-y-0.5'
+										className='w-full py-2.5 sm:py-3 cursor-pointer px-4 border border-transparent rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 disabled:opacity-50 text-base sm:text-lg font-medium transform hover:-translate-y-0.5 mt-2'
 									>
 										{loading ? (
 											<span className='flex items-center justify-center'>
 												<svg
-													className='animate-spin -ml-1 mr-2 h-5 w-5 text-white'
+													className='animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5 text-white'
 													xmlns='http://www.w3.org/2000/svg'
 													fill='none'
 													viewBox='0 0 24 24'
@@ -162,7 +154,7 @@ const AdminLogin = () => {
 														d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
 													></path>
 												</svg>
-												Signing in...
+												<span className="text-sm sm:text-base">Signing in...</span>
 											</span>
 										) : (
 											"Sign in"
@@ -175,7 +167,7 @@ const AdminLogin = () => {
 				</div>
 
 				{/* Footer */}
-				<footer className='py-3 text-center text-gray-600 text-sm bg-white bg-opacity-70'>
+				<footer className='py-2 sm:py-3 text-center text-gray-600 text-xs sm:text-sm bg-white bg-opacity-70'>
 					<p>© {new Date().getFullYear()} NovelFinds. All rights reserved.</p>
 				</footer>
 			</div>

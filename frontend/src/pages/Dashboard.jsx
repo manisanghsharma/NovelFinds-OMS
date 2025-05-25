@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { FaBook, FaShoppingCart, FaMoneyBillWave } from 'react-icons/fa';
+import { FaBook, FaShoppingCart, FaMoneyBillWave, FaSync } from 'react-icons/fa';
 import { Bar, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -45,19 +45,19 @@ const Dashboard = () => {
     {
       title: 'Available Books',
       value: inventorySummary?.availableCount || 0,
-      icon: <FaBook className="text-blue-500" />,
+      icon: <FaBook className="text-blue-500 text-xl md:text-2xl" />,
       color: 'bg-blue-100'
     },
     {
       title: 'Sold Books',
       value: inventorySummary?.soldCount || 0,
-      icon: <FaShoppingCart className="text-green-500" />,
+      icon: <FaShoppingCart className="text-green-500 text-xl md:text-2xl" />,
       color: 'bg-green-100'
     },
     {
       title: 'Inventory Value',
       value: `₹${inventorySummary?.inventoryValue?.toFixed(2) || 0}`,
-      icon: <FaMoneyBillWave className="text-yellow-500" />,
+      icon: <FaMoneyBillWave className="text-yellow-500 text-xl md:text-2xl" />,
       color: 'bg-yellow-100'
     }
   ];
@@ -104,49 +104,50 @@ const Dashboard = () => {
   };
   
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+    <div className="space-y-4 md:space-y-8">
+      <div className="flex flex-row justify-between items-center">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-800">Dashboard</h1>
         <button 
           onClick={() => fetchAnalyticsData()}
-          className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition-colors cursor-pointer"
+          className="p-2 text-indigo-600 cursor-pointer hover:text-indigo-800 hover:bg-indigo-100 rounded-full transition-colors"
+          aria-label="Refresh data"
         >
-          Refresh Data
+          <FaSync className={`text-lg ${loadingAnalytics ? 'animate-spin' : ''}`} />
         </button>
       </div>
       
       {loadingAnalytics ? (
-        <div className="flex justify-center py-10">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700"></div>
+        <div className="flex justify-center py-8 md:py-10">
+          <div className="animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-indigo-700"></div>
         </div>
       ) : (
         <>
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
             {statsCards.map((card, index) => (
               <div 
                 key={index}
-                className={`${card.color} p-6 rounded-lg shadow-sm flex items-center space-x-4`}
+                className={`${card.color} p-4 md:p-6 rounded-lg shadow-sm flex items-center space-x-3 md:space-x-4`}
               >
-                <div className="text-2xl">{card.icon}</div>
+                <div>{card.icon}</div>
                 <div>
-                  <p className="text-gray-600 text-sm">{card.title}</p>
-                  <p className="text-2xl font-bold text-gray-800">{card.value}</p>
+                  <p className="text-gray-600 text-xs md:text-sm">{card.title}</p>
+                  <p className="text-lg md:text-2xl font-bold text-gray-800">{card.value}</p>
                 </div>
               </div>
             ))}
           </div>
           
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Monthly Sales Chart */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-gray-800">Monthly Sales & Profits</h2>
+            <div className="lg:col-span-2 bg-white p-3 md:p-6 rounded-lg shadow-sm">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-3 md:mb-4">
+                <h2 className="text-base md:text-lg font-semibold text-gray-800">Monthly Sales & Profits</h2>
                 <select 
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="border rounded px-2 py-1 text-sm"
+                  className="border rounded px-2 py-1.5 text-sm w-full sm:w-auto"
                 >
                   {[...Array(5)].map((_, i) => {
                     const year = new Date().getFullYear() - i;
@@ -154,7 +155,7 @@ const Dashboard = () => {
                   })}
                 </select>
               </div>
-              <div className="h-64">
+              <div className="h-56 md:h-64">
                 <Bar 
                   data={monthlySalesChartData}
                   options={{
@@ -164,6 +165,17 @@ const Dashboard = () => {
                       y: {
                         beginAtZero: true
                       }
+                    },
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          boxWidth: 12,
+                          font: {
+                            size: 11
+                          }
+                        }
+                      }
                     }
                   }}
                 />
@@ -171,9 +183,9 @@ const Dashboard = () => {
             </div>
             
             {/* Genre Breakdown Chart */}
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Genre Breakdown</h2>
-              <div className="h-64 flex justify-center items-center">
+            <div className="bg-white p-3 md:p-6 rounded-lg shadow-sm">
+              <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4">Genre Breakdown</h2>
+              <div className="h-56 md:h-64 flex justify-center items-center">
                 {genreBreakdown?.length > 0 ? (
                   <Pie 
                     data={genreChartData}
@@ -182,49 +194,84 @@ const Dashboard = () => {
                       maintainAspectRatio: false,
                       plugins: {
                         legend: {
-                          position: 'bottom'
+                          position: 'bottom',
+                          labels: {
+                            boxWidth: 12,
+                            font: {
+                              size: 10
+                            }
+                          }
                         }
                       }
                     }}
                   />
                 ) : (
-                  <p className="text-gray-500">No genre data available</p>
+                  <p className="text-gray-500 text-sm">No genre data available</p>
                 )}
               </div>
             </div>
           </div>
           
           {/* Top Customers */}
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Top Customers</h2>
+          <div className="bg-white p-3 md:p-6 rounded-lg shadow-sm">
+            <h2 className="text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4">Top Customers</h2>
             {customerBreakdown?.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Books</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Spent</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {customerBreakdown
-                      .sort((a, b) => b.totalSpent - a.totalSpent)
-                      .slice(0, 5)
-                      .map((customer, index) => (
-                        <tr key={index} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{customer.name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{customer.ordersCount}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{customer.booksCount}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{customer.totalSpent.toFixed(2)}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                {/* Desktop view - Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Books</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Spent</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {customerBreakdown
+                        .sort((a, b) => b.totalSpent - a.totalSpent)
+                        .slice(0, 5)
+                        .map((customer, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{customer.name}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{customer.ordersCount}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{customer.booksCount}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{customer.totalSpent.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Mobile view - Cards */}
+                <div className="md:hidden space-y-3">
+                  {customerBreakdown
+                    .sort((a, b) => b.totalSpent - a.totalSpent)
+                    .slice(0, 5)
+                    .map((customer, index) => (
+                      <div key={index} className="bg-gray-50 p-3 rounded shadow-sm">
+                        <div className="font-medium text-gray-900">{customer.name}</div>
+                        <div className="grid grid-cols-3 mt-2 text-xs">
+                          <div>
+                            <span className="text-gray-500 block">Orders</span>
+                            <span className="font-medium">{customer.ordersCount}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Books</span>
+                            <span className="font-medium">{customer.booksCount}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Total</span>
+                            <span className="font-medium">₹{customer.totalSpent.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </>
             ) : (
-              <p className="text-gray-500">No customer data available</p>
+              <p className="text-gray-500 text-sm">No customer data available</p>
             )}
           </div>
         </>

@@ -41,8 +41,16 @@ export const AppProvider = ({ children }) => {
   ]);
   const [paymentModes] = useState(['Cash', 'UPI', 'Bank', 'Other']);
   
-  // UI state that persists between tab changes
-  const [showGraphs, setShowGraphs] = useState(true);
+  // UI state that persists between tab changes - now also in localStorage
+  const [showGraphs, setShowGraphs] = useState(() => {
+    const savedShowGraphs = localStorage.getItem('showGraphs');
+    return savedShowGraphs !== null ? JSON.parse(savedShowGraphs) : true;
+  });
+  
+  // Update localStorage whenever showGraphs changes
+  useEffect(() => {
+    localStorage.setItem('showGraphs', JSON.stringify(showGraphs));
+  }, [showGraphs]);
   
   // Fetch books
   const fetchBooks = useCallback(async (filters = {}) => {

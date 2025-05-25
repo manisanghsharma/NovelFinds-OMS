@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Search, User, ShoppingBag, Pencil, Trash2 } from 'lucide-react';
+import { Search, User, ShoppingBag, Pencil, Trash2, Phone, MapPin } from 'lucide-react';
 import CustomerDetailsModal from '../components/customers/CustomerDetailsModal';
 import EditCustomerModal from '../components/customers/EditCustomerModal';
 import DeleteCustomerModal from '../components/customers/DeleteCustomerModal';
 
 // Profile Image component that generates avatars based on customer name
 const ProfileImage = ({ name, size = 'small' }) => {
-  // Size classes
+  // Size classes - reduced sizes for mobile
   const sizeClasses = size === 'large' 
-    ? "h-24 w-24" 
+    ? "h-16 w-16 md:h-24 md:w-24" 
     : size === 'medium'
-      ? "h-16 w-16"
-      : "h-10 w-10";
+      ? "h-12 w-12 md:h-16 md:w-16"
+      : "h-8 w-8 md:h-10 md:w-10";
   
   // Get initials from name (up to 2 characters)
   const getInitials = (name) => {
@@ -59,7 +59,7 @@ const ProfileImage = ({ name, size = 'small' }) => {
       )}
       {!name && (
         <User 
-          size={size === 'large' ? 32 : size === 'medium' ? 24 : 16} 
+          size={size === 'large' ? 24 : size === 'medium' ? 20 : 14} 
           className="text-white" 
         />
       )}
@@ -128,13 +128,13 @@ const Customers = () => {
   };
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Customer Management</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-800">Customer Management</h1>
       </div>
       
       {/* Search */}
-      <div className="bg-white p-4 rounded-lg shadow-sm">
+      <div className="bg-white p-3 md:p-4 rounded-lg shadow-sm">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search size={16} className="text-gray-400" />
@@ -144,13 +144,80 @@ const Customers = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name, social handle or phone"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="block w-full pl-9 pr-3 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
       </div>
       
-      {/* Customers List */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      {/* Mobile Customers List */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden md:hidden">
+        {loadingCustomers ? (
+          <div className="flex justify-center py-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-700"></div>
+          </div>
+        ) : filteredCustomers.length > 0 ? (
+          <div className="divide-y divide-gray-200">
+            {filteredCustomers.map((customer) => (
+              <div 
+                key={customer._id}
+                className="p-3 hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleViewCustomer(customer)}
+              >
+                <div className="flex items-center mb-2">
+                  <ProfileImage name={customer.name} />
+                  <div className="ml-2">
+                    <div className="text-sm font-medium text-gray-900">{customer.name}</div>
+                    <div className="text-xs text-gray-500">{customer.socialHandle}</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-2 mb-2">
+                  <Phone size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-gray-500">{customer.phoneNumber}</div>
+                </div>
+                
+                <div className="flex items-start space-x-2 mb-2">
+                  <MapPin size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-gray-500 truncate">{customer.address}</div>
+                </div>
+                
+                <div className="flex justify-between items-center mt-2">
+                  <div className="flex items-center space-x-1">
+                    <ShoppingBag size={16} className="text-indigo-600" />
+                    <span className="text-xs text-gray-700">{customer.orders?.length || 0} orders</span>
+                  </div>
+                  
+                  <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
+                    <button 
+                      onClick={(e) => handleEditClick(e, customer)}
+                      className="text-indigo-600 hover:text-indigo-900 p-1 hover:bg-indigo-50 rounded"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button 
+                      onClick={(e) => handleDeleteClick(e, customer)}
+                      className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-6 text-center text-gray-500 text-sm">
+            {searchTerm ? (
+              <p>No customers match your search criteria</p>
+            ) : (
+              <p>No customers found. Customers will be added when you create orders.</p>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {/* Desktop Customers Table */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden hidden md:block">
         {loadingCustomers ? (
           <div className="flex justify-center py-10">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700"></div>

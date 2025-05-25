@@ -198,45 +198,45 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
   if (!isOpen || !book) return null;
   
   return (
-		<div className='fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50'>
-			<div className='bg-white m-5 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto'>
-				<div className='flex justify-between items-center border-b px-6 py-4'>
-					<h2 className='text-xl font-semibold text-gray-800'>Edit Book</h2>
+		<div className='fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-1'>
+			<div className='bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-3'>
+				<div className='flex justify-between items-center border-b px-4 py-3 md:px-6 md:py-4 sticky top-0 bg-white z-10'>
+					<h2 className='text-lg md:text-xl font-semibold text-gray-800'>Edit Book</h2>
 					<button
 						onClick={() => {
 							stopScan();
 							onClose();
 						}}
-						className='text-gray-400 hover:text-gray-600'
+						className='text-gray-400 hover:text-gray-600 p-1'
 					>
-						<FaTimes size={20} />
+						<FaTimes size={18} />
 					</button>
 				</div>
 
-				<form onSubmit={handleSubmit(onSubmit)} className='p-6 space-y-4'>
+				<form onSubmit={handleSubmit(onSubmit)} className='p-4 md:p-6 space-y-3 md:space-y-4'>
 					{/* ISBN Lookup */}
-					<div className='mb-6'>
-						<label className='block text-gray-700 mb-2'>ISBN Lookup</label>
+					<div className='mb-4 md:mb-6'>
+						<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>ISBN Lookup</label>
 						{scanning ? (
-							<div className='space-y-3'>
+							<div className='space-y-2 md:space-y-3'>
 								<div className='bg-black rounded overflow-hidden'>
 									<video
 										ref={videoRef}
 										autoPlay
 										playsInline
-										className='w-full h-64 object-cover'
+										className='w-full h-48 md:h-64 object-cover'
 									></video>
 								</div>
 								{scannerError && (
-									<p className='mt-1 text-sm text-red-600'>{scannerError}</p>
+									<p className='mt-1 text-xs md:text-sm text-red-600'>{scannerError}</p>
 								)}
-								<div className='text-center text-sm text-gray-500 mt-1'>
+								<div className='text-center text-xs md:text-sm text-gray-500 mt-1'>
 									Point camera at barcode to scan
 								</div>
 								<button
 									type='button'
 									onClick={stopScan}
-									className='bg-red-600 cursor-pointer text-white px-4 py-2 rounded flex items-center space-x-2 hover:bg-red-700 transition-colors'
+									className='bg-red-600 cursor-pointer text-white px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded flex items-center space-x-1 md:space-x-2 hover:bg-red-700 transition-colors'
 								>
 									<span>Cancel Scan</span>
 								</button>
@@ -247,58 +247,58 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
 									<input
 										type='text'
 										{...register("isbn")}
-										className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+										className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 										placeholder='Enter ISBN to auto-fill details'
 									/>
 								</div>
 								<button
 									type='button'
 									onClick={() => lookupISBN(isbnValue)}
-									className='bg-indigo-600 cursor-pointer text-white px-4 py-2 rounded flex items-center space-x-2 hover:bg-indigo-700 transition-colors'
+									className='bg-indigo-600 cursor-pointer text-white px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded flex items-center space-x-1 md:space-x-2 hover:bg-indigo-700 transition-colors'
 									disabled={isbnLoading}
 								>
 									{isbnLoading ? (
-										<div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white'></div>
+										<div className='animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-b-2 border-white'></div>
 									) : (
-										<FaSearch />
+										<FaSearch size={14} className="md:text-base" />
 									)}
 									<span>Lookup</span>
 								</button>
 								<button
 									type='button'
 									onClick={startScan}
-									className='bg-green-600 cursor-pointer text-white px-4 py-2 rounded flex items-center space-x-2 hover:bg-green-700 transition-colors'
+									className='bg-green-600 cursor-pointer text-white px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded flex items-center space-x-1 md:space-x-2 hover:bg-green-700 transition-colors'
 								>
-									<FaCamera />
+									<FaCamera size={14} className="md:text-base" />
 									<span>Scan</span>
 								</button>
 							</div>
 						)}
 						{isbnError && (
-							<p className='mt-1 text-sm text-red-600'>{isbnError}</p>
+							<p className='mt-1 text-xs md:text-sm text-red-600'>{isbnError}</p>
 						)}
 					</div>
 
 					{/* Required Fields */}
-					<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+					<div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
 						<div>
-							<label className='block text-gray-700 mb-2'>
+							<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>
 								Title <span className='text-red-500'>*</span>
 							</label>
 							<input
 								type='text'
 								{...register("title", { required: "Title is required" })}
-								className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+								className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 							/>
 							{errors.title && (
-								<p className='mt-1 text-sm text-red-600'>
+								<p className='mt-1 text-xs md:text-sm text-red-600'>
 									{errors.title.message}
 								</p>
 							)}
 						</div>
 
 						<div>
-							<label className='block text-gray-700 mb-2'>
+							<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>
 								Purchase Date <span className='text-red-500'>*</span>
 							</label>
 							<input
@@ -306,22 +306,22 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
 								{...register("purchaseDate", {
 									required: "Purchase date is required",
 								})}
-								className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+								className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 							/>
 							{errors.purchaseDate && (
-								<p className='mt-1 text-sm text-red-600'>
+								<p className='mt-1 text-xs md:text-sm text-red-600'>
 									{errors.purchaseDate.message}
 								</p>
 							)}
 						</div>
 
 						<div>
-							<label className='block text-gray-700 mb-2'>
+							<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>
 								Format <span className='text-red-500'>*</span>
 							</label>
 							<select
 								{...register("format")}
-								className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+								className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 							>
 								<option value='hardcover'>Hardcover</option>
 								<option value='paperback'>Paperback</option>
@@ -329,7 +329,7 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
 						</div>
 
 						<div>
-							<label className='block text-gray-700 mb-2'>
+							<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>
 								Purchase Cost (₹) <span className='text-red-500'>*</span>
 							</label>
 							<input
@@ -339,17 +339,17 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
 									required: "Purchase cost is required",
 									min: { value: 0, message: "Cost must be positive" },
 								})}
-								className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+								className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 							/>
 							{errors.purchaseCost && (
-								<p className='mt-1 text-sm text-red-600'>
+								<p className='mt-1 text-xs md:text-sm text-red-600'>
 									{errors.purchaseCost.message}
 								</p>
 							)}
 						</div>
 
 						<div>
-							<label className='block text-gray-700 mb-2'>
+							<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>
 								Selling Price (₹) <span className='text-red-500'>*</span>
 							</label>
 							<input
@@ -359,17 +359,17 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
 									required: "Selling price is required",
 									min: { value: 0, message: "Price must be positive" },
 								})}
-								className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+								className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 							/>
 							{errors.sellingPrice && (
-								<p className='mt-1 text-sm text-red-600'>
+								<p className='mt-1 text-xs md:text-sm text-red-600'>
 									{errors.sellingPrice.message}
 								</p>
 							)}
 						</div>
 
 						<div>
-							<label className='block text-gray-700 mb-2'>
+							<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>
 								Weight (kg) <span className='text-red-500'>*</span>
 							</label>
 							<input
@@ -379,10 +379,10 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
 									required: "Weight is required",
 									min: { value: 0, message: "Weight must be positive" },
 								})}
-								className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+								className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 							/>
 							{errors.weight && (
-								<p className='mt-1 text-sm text-red-600'>
+								<p className='mt-1 text-xs md:text-sm text-red-600'>
 									{errors.weight.message}
 								</p>
 							)}
@@ -390,30 +390,30 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
 					</div>
 
 					{/* Optional Fields */}
-					<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+					<div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
 						<div>
-							<label className='block text-gray-700 mb-2'>Author</label>
+							<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>Author</label>
 							<input
 								type='text'
 								{...register("author")}
-								className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+								className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 							/>
 						</div>
 
 						<div>
-							<label className='block text-gray-700 mb-2'>Genre</label>
+							<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>Genre</label>
 							<input
 								type='text'
 								{...register("genre")}
-								className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+								className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 							/>
 						</div>
 
 						<div>
-							<label className='block text-gray-700 mb-2'>Condition</label>
+							<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>Condition</label>
 							<select
 								{...register("condition")}
-								className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+								className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 							>
 								<option value='New'>New</option>
 								<option value='Like New'>Like New</option>
@@ -425,10 +425,10 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
 						</div>
 
 						<div>
-							<label className='block text-gray-700 mb-2'>Status</label>
+							<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>Status</label>
 							<select
 								{...register("status")}
-								className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+								className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 							>
 								<option value='available'>Available</option>
 								<option value='sold'>Sold</option>
@@ -437,29 +437,29 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
 					</div>
 
 					<div>
-						<label className='block text-gray-700 mb-2'>Notes</label>
+						<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>Notes</label>
 						<textarea
 							{...register("notes")}
 							rows='3'
-							className='w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+							className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
 						></textarea>
 					</div>
 
-					<div className='flex justify-end space-x-3 pt-4 border-t'>
+					<div className='flex justify-end space-x-2 md:space-x-3 pt-3 md:pt-4 border-t'>
 						<button
 							type='button'
 							onClick={onClose}
-							className='px-4 py-2 cursor-pointer border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors'
+							className='px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base cursor-pointer border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors'
 						>
 							Cancel
 						</button>
 						<button
 							type='submit'
 							disabled={isLoading}
-							className='px-4 py-2 cursor-pointer bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center space-x-2'
+							className='px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base cursor-pointer bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center space-x-1 md:space-x-2'
 						>
 							{isLoading && (
-								<div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white'></div>
+								<div className='animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-b-2 border-white'></div>
 							)}
 							<span>Update Book</span>
 						</button>

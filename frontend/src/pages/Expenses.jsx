@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { DollarSign, Plus, Filter, Download, Edit, Trash, FileDown, BarChart2, PieChart, Eye, EyeOff } from 'lucide-react';
+import { DollarSign, Plus, Filter, Download, Edit, Trash, FileDown, BarChart2, PieChart, Eye, EyeOff, Calendar, CreditCard } from 'lucide-react';
 import { Bar, Pie } from 'react-chartjs-2';
 import { toast } from 'react-hot-toast';
 import {
@@ -46,7 +46,8 @@ const CATEGORY_COLORS = Object.fromEntries(
 const Expenses = () => {
   const { 
     expenses, 
-    loadingExpenses, 
+    loadingExpenses,
+    setLoadingExpenses,
     expenseAnalytics,
     cashInHand,
     expenseCategories,
@@ -296,15 +297,15 @@ const Expenses = () => {
   };
   
   return (
-		<div className='space-y-8 pb-8'>
+		<div className='space-y-4 md:space-y-8 pb-4 md:pb-8'>
 			{/* Header with actions */}
-			<div className='flex flex-col md:flex-row md:justify-between md:items-center gap-4'>
-				<h1 className='text-2xl font-bold text-gray-800'>Expense Tracker</h1>
+			<div className='flex flex-col md:flex-row md:justify-between md:items-center gap-3'>
+				<h1 className='text-xl md:text-2xl font-bold text-gray-800'>Expense Tracker</h1>
 
 				<div className='flex flex-wrap gap-2'>
 					<button
 						onClick={handleOpenBalanceClick}
-						className='flex items-center cursor-pointer gap-1 bg-indigo-100 text-indigo-700 px-3 py-2 rounded-md hover:bg-indigo-200 transition-colors'
+						className='flex items-center cursor-pointer gap-1 bg-indigo-100 text-indigo-700 px-2 py-1.5 md:px-3 md:py-2 text-sm rounded-md hover:bg-indigo-200 transition-colors'
 					>
 						<DollarSign size={16} />
 						<span className="hidden sm:inline">Update Opening Balance</span>
@@ -313,7 +314,7 @@ const Expenses = () => {
 
 					<button
 						onClick={() => setShowFilters(!showFilters)}
-						className='flex items-center cursor-pointer gap-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors'
+						className='flex items-center cursor-pointer gap-1 bg-gray-100 text-gray-700 px-2 py-1.5 md:px-3 md:py-2 text-sm rounded-md hover:bg-gray-200 transition-colors'
 					>
 						<Filter size={16} />
 						<span className="inline">Filter</span>
@@ -321,7 +322,7 @@ const Expenses = () => {
 
 					<button
 						onClick={exportCsv}
-						className='hidden sm:flex items-center cursor-pointer gap-1 bg-green-100 text-green-700 px-3 py-2 rounded-md hover:bg-green-200 transition-colors'
+						className='hidden sm:flex items-center cursor-pointer gap-1 bg-green-100 text-green-700 px-2 py-1.5 md:px-3 md:py-2 text-sm rounded-md hover:bg-green-200 transition-colors'
 					>
 						<FileDown size={16} />
 						<span>Export CSV</span>
@@ -332,7 +333,7 @@ const Expenses = () => {
 							setEditingExpense(null);
 							setShowExpenseForm(true);
 						}}
-						className='flex items-center cursor-pointer gap-1 bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors'
+						className='flex items-center cursor-pointer gap-1 bg-indigo-600 text-white px-2 py-1.5 md:px-3 md:py-2 text-sm rounded-md hover:bg-indigo-700 transition-colors'
 					>
 						<Plus size={16} />
 						<span>Add Expense</span>
@@ -341,27 +342,27 @@ const Expenses = () => {
 			</div>
 
 			{/* Cash in Hand */}
-			<div className='bg-indigo-50 p-6 rounded-lg shadow-sm'>
-				<h2 className='text-lg font-semibold text-gray-800 mb-2'>
+			<div className='bg-indigo-50 p-4 md:p-6 rounded-lg shadow-sm'>
+				<h2 className='text-base md:text-lg font-semibold text-gray-800 mb-1 md:mb-2'>
 					Cash in Hand
 				</h2>
-				<div className='text-3xl font-bold text-indigo-700'>
+				<div className='text-2xl md:text-3xl font-bold text-indigo-700'>
 					₹{cashInHand.toFixed(2)}
 				</div>
-				<p className='text-sm text-gray-600 mt-1'>
+				<p className='text-xs md:text-sm text-gray-600 mt-1'>
 					Total cash received minus total expenses
 				</p>
 			</div>
 
 			{/* Filter Form */}
 			{showFilters && (
-				<div className='bg-white p-6 rounded-lg shadow-sm'>
-					<h2 className='text-lg font-semibold text-gray-800 mb-4'>
+				<div className='bg-white p-4 md:p-6 rounded-lg shadow-sm'>
+					<h2 className='text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4'>
 						Filter Expenses
 					</h2>
-					<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+					<div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
 						<div>
-							<label className='block text-sm font-medium text-gray-700 mb-1'>
+							<label className='block text-xs md:text-sm font-medium text-gray-700 mb-1'>
 								Start Date
 							</label>
 							<input
@@ -369,11 +370,11 @@ const Expenses = () => {
 								name='startDate'
 								value={filter.startDate}
 								onChange={handleFilterChange}
-								className='w-full border rounded-md px-3 py-2'
+								className='w-full border rounded-md px-2 py-1.5 md:px-3 md:py-2 text-sm'
 							/>
 						</div>
 						<div>
-							<label className='block text-sm font-medium text-gray-700 mb-1'>
+							<label className='block text-xs md:text-sm font-medium text-gray-700 mb-1'>
 								End Date
 							</label>
 							<input
@@ -381,18 +382,18 @@ const Expenses = () => {
 								name='endDate'
 								value={filter.endDate}
 								onChange={handleFilterChange}
-								className='w-full border rounded-md px-3 py-2'
+								className='w-full border rounded-md px-2 py-1.5 md:px-3 md:py-2 text-sm'
 							/>
 						</div>
 						<div>
-							<label className='block text-sm font-medium text-gray-700 mb-1'>
+							<label className='block text-xs md:text-sm font-medium text-gray-700 mb-1'>
 								Category
 							</label>
 							<select
 								name='category'
 								value={filter.category}
 								onChange={handleFilterChange}
-								className='w-full border rounded-md px-3 py-2'
+								className='w-full border rounded-md px-2 py-1.5 md:px-3 md:py-2 text-sm'
 							>
 								<option value=''>All Categories</option>
 								{expenseCategories.map((category) => (
@@ -403,14 +404,14 @@ const Expenses = () => {
 							</select>
 						</div>
 						<div>
-							<label className='block text-sm font-medium text-gray-700 mb-1'>
+							<label className='block text-xs md:text-sm font-medium text-gray-700 mb-1'>
 								Payment Mode
 							</label>
 							<select
 								name='paymentMode'
 								value={filter.paymentMode}
 								onChange={handleFilterChange}
-								className='w-full border rounded-md px-3 py-2'
+								className='w-full border rounded-md px-2 py-1.5 md:px-3 md:py-2 text-sm'
 							>
 								<option value=''>All Payment Modes</option>
 								{paymentModes.map((mode) => (
@@ -421,16 +422,16 @@ const Expenses = () => {
 							</select>
 						</div>
 					</div>
-					<div className='flex gap-2 mt-4'>
+					<div className='flex gap-2 mt-3 md:mt-4'>
 						<button
 							onClick={applyFilters}
-							className='bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors cursor-pointer'
+							className='bg-indigo-600 text-white px-3 py-1.5 md:px-4 md:py-2 text-sm rounded-md hover:bg-indigo-700 transition-colors cursor-pointer'
 						>
 							Apply Filters
 						</button>
 						<button
 							onClick={resetFilters}
-							className='bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors cursor-pointer'
+							className='bg-gray-200 text-gray-700 px-3 py-1.5 md:px-4 md:py-2 text-sm rounded-md hover:bg-gray-300 transition-colors cursor-pointer'
 						>
 							Reset
 						</button>
@@ -440,20 +441,20 @@ const Expenses = () => {
 
 			{/* Opening Balance Form */}
 			{showOpeningBalanceForm && (
-				<div className='bg-white p-6 rounded-lg shadow-sm'>
-					<h2 className='text-lg font-semibold text-gray-800 mb-4'>
+				<div className='bg-white p-4 md:p-6 rounded-lg shadow-sm'>
+					<h2 className='text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4'>
 						Update Opening Balance
 					</h2>
 					<form onSubmit={handleOpeningBalanceUpdate}>
-						<div className='mb-4'>
-							<label className='block text-sm font-medium text-gray-700 mb-1'>
+						<div className='mb-3 md:mb-4'>
+							<label className='block text-xs md:text-sm font-medium text-gray-700 mb-1'>
 								Opening Balance Amount
 							</label>
 							<input
 								type='number'
 								value={openingBalance}
 								onChange={(e) => setOpeningBalance(Number(e.target.value))}
-								className='w-full border rounded-md px-3 py-2'
+								className='w-full border rounded-md px-2 py-1.5 md:px-3 md:py-2 text-sm'
 								placeholder='Enter opening balance amount'
 								required
 							/>
@@ -461,14 +462,14 @@ const Expenses = () => {
 						<div className='flex gap-2'>
 							<button
 								type='submit'
-								className='bg-indigo-600 cursor-pointer  text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors'
+								className='bg-indigo-600 cursor-pointer text-white px-3 py-1.5 md:px-4 md:py-2 text-sm rounded-md hover:bg-indigo-700 transition-colors'
 							>
 								Update Balance
 							</button>
 							<button
 								type='button'
 								onClick={() => setShowOpeningBalanceForm(false)}
-								className='bg-gray-200 text-gray-700 cursor-pointer px-4 py-2 rounded-md hover:bg-gray-300 transition-colors'
+								className='bg-gray-200 text-gray-700 cursor-pointer px-3 py-1.5 md:px-4 md:py-2 text-sm rounded-md hover:bg-gray-300 transition-colors'
 							>
 								Cancel
 							</button>
@@ -488,24 +489,24 @@ const Expenses = () => {
 			/>
 
 			{/* Expense Analytics */}
-			<div className='bg-white p-6 rounded-lg shadow-sm'>
-				<div className='flex justify-between items-center mb-4'>
+			<div className='bg-white p-4 md:p-6 rounded-lg shadow-sm'>
+				<div className='flex justify-between items-center mb-3 md:mb-4'>
 					<div className='flex items-center gap-2'>
-						<h2 className='text-lg font-semibold text-gray-800'>
+						<h2 className='text-base md:text-lg font-semibold text-gray-800'>
 							Expense Analytics
 						</h2>
 						<button
 							onClick={() => setShowGraphs(!showGraphs)}
-							className='p-2 text-gray-500 cursor-pointer hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors'
+							className='p-1 md:p-2 text-gray-500 cursor-pointer hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors'
 							title={showGraphs ? "Hide graphs" : "Show graphs"}
 						>
-							{showGraphs ? <EyeOff size={18} /> : <Eye size={18} />}
+							{showGraphs ? <EyeOff size={16} className="md:h-[18px] md:w-[18px]" /> : <Eye size={16} className="md:h-[18px] md:w-[18px]" />}
 						</button>
 					</div>
 					<div className='flex'>
 						<button
 							onClick={() => updatePeriod("month")}
-							className={`px-3 py-1 cursor-pointer text-sm rounded-l-md ${
+							className={`px-2 py-1 md:px-3 md:py-1 cursor-pointer text-xs md:text-sm rounded-l-md ${
 								timePeriod === "month"
 									? "bg-indigo-600 text-white"
 									: "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -515,7 +516,7 @@ const Expenses = () => {
 						</button>
 						<button
 							onClick={() => updatePeriod("year")}
-							className={`px-3 py-1 cursor-pointer text-sm ${
+							className={`px-2 py-1 md:px-3 md:py-1 cursor-pointer text-xs md:text-sm ${
 								timePeriod === "year"
 									? "bg-indigo-600 text-white"
 									: "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -525,7 +526,7 @@ const Expenses = () => {
 						</button>
 						<button
 							onClick={() => updatePeriod("all")}
-							className={`px-3 py-1 cursor-pointer text-sm rounded-r-md ${
+							className={`px-2 py-1 md:px-3 md:py-1 cursor-pointer text-xs md:text-sm rounded-r-md ${
 								timePeriod === "all"
 									? "bg-indigo-600 text-white"
 									: "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -537,29 +538,29 @@ const Expenses = () => {
 				</div>
 
 				{loadingExpenses ? (
-					<div className='flex justify-center py-10'>
-						<div className='animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700'></div>
+					<div className='flex justify-center py-6 md:py-10'>
+						<div className='animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-indigo-700'></div>
 					</div>
 				) : (
 					<>
 						{/* Summary Stats */}
-						<div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-6'>
-							<div className='bg-gray-50 p-4 rounded-lg'>
-								<p className='text-sm text-gray-600'>Total Expenses</p>
-								<p className='text-2xl font-bold text-gray-800'>
+						<div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6'>
+							<div className='bg-gray-50 p-3 md:p-4 rounded-lg'>
+								<p className='text-xs md:text-sm text-gray-600'>Total Expenses</p>
+								<p className='text-xl md:text-2xl font-bold text-gray-800'>
 									₹{expenseAnalytics?.totalExpenses?.toFixed(2) || "0.00"}
 								</p>
 							</div>
-							<div className='bg-gray-50 p-4 rounded-lg'>
-								<p className='text-sm text-gray-600'>Total Revenue</p>
-								<p className='text-2xl font-bold text-gray-800'>
+							<div className='bg-gray-50 p-3 md:p-4 rounded-lg'>
+								<p className='text-xs md:text-sm text-gray-600'>Total Revenue</p>
+								<p className='text-xl md:text-2xl font-bold text-gray-800'>
 									₹{expenseAnalytics?.totalIncome?.toFixed(2) || "0.00"}
 								</p>
 							</div>
-							<div className='bg-gray-50 p-4 rounded-lg'>
-								<p className='text-sm text-gray-600'>Net Profit</p>
+							<div className='bg-gray-50 p-3 md:p-4 rounded-lg'>
+								<p className='text-xs md:text-sm text-gray-600'>Net Profit</p>
 								<p
-									className={`text-2xl font-bold ${
+									className={`text-xl md:text-2xl font-bold ${
 										expenseAnalytics?.netProfit >= 0
 											? "text-green-600"
 											: "text-red-600"
@@ -572,14 +573,14 @@ const Expenses = () => {
 
 						{/* Charts */}
 						{showGraphs && (
-							<div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+							<div className='grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6'>
 								{/* Category Breakdown */}
 								<div>
-									<h3 className='text-md font-medium text-gray-700 mb-2 flex items-center'>
-										<PieChart size={18} className='mr-1' />
+									<h3 className='text-xs md:text-md font-medium text-gray-700 mb-2 flex items-center'>
+										<PieChart size={14} className='mr-1 md:h-[18px] md:w-[18px]' />
 										Expenses by Category
 									</h3>
-									<div className='h-64'>
+									<div className='h-56 md:h-64'>
 										{expenseAnalytics?.categoryBreakdown?.length > 0 ? (
 											<Pie
 												data={categoryChartData}
@@ -595,7 +596,7 @@ const Expenses = () => {
 											/>
 										) : (
 											<div className='h-full flex items-center justify-center'>
-												<p className='text-gray-500'>
+												<p className='text-gray-500 text-xs md:text-sm'>
 													No expense data available
 												</p>
 											</div>
@@ -605,11 +606,11 @@ const Expenses = () => {
 
 								{/* Monthly Breakdown */}
 								<div>
-									<h3 className='text-md font-medium text-gray-700 mb-2 flex items-center'>
-										<BarChart2 size={18} className='mr-1' />
+									<h3 className='text-xs md:text-md font-medium text-gray-700 mb-2 flex items-center'>
+										<BarChart2 size={14} className='mr-1 md:h-[18px] md:w-[18px]' />
 										Expenses Over Time
 									</h3>
-									<div className='h-64'>
+									<div className='h-56 md:h-64'>
 										{expenseAnalytics?.monthlyBreakdown?.length > 0 ? (
 											<Bar
 												data={monthlyChartData}
@@ -625,7 +626,7 @@ const Expenses = () => {
 											/>
 										) : (
 											<div className='h-full flex items-center justify-center'>
-												<p className='text-gray-500'>
+												<p className='text-gray-500 text-xs md:text-sm'>
 													No expense data available
 												</p>
 											</div>
@@ -639,86 +640,144 @@ const Expenses = () => {
 			</div>
 
 			{/* Expense List */}
-			<div className='bg-white p-6 rounded-lg shadow-sm'>
-				<h2 className='text-lg font-semibold text-gray-800 mb-4'>Expenses</h2>
+			<div className='bg-white p-4 md:p-6 rounded-lg shadow-sm'>
+				<h2 className='text-base md:text-lg font-semibold text-gray-800 mb-3 md:mb-4'>Expenses</h2>
 
 				{loadingExpenses ? (
-					<div className='flex justify-center py-10'>
-						<div className='animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700'></div>
+					<div className='flex justify-center py-6 md:py-10'>
+						<div className='animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-indigo-700'></div>
 					</div>
 				) : expenses.length > 0 ? (
-					<div className='overflow-x-auto'>
-						<table className='min-w-full divide-y divide-gray-200'>
-							<thead>
-								<tr>
-									<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-										Date
-									</th>
-									<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-										Category
-									</th>
-									<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-										Amount
-									</th>
-									<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-										Payment Mode
-									</th>
-									<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-										Actions
-									</th>
-								</tr>
-							</thead>
-							<tbody className='bg-white divide-y divide-gray-200'>
-								{expenses.map((expense) => (
-									<tr
-										key={expense._id}
-										className='hover:bg-gray-50 transition-colors'
-									>
-										<td className='px-6 py-4 whitespace-nowrap text-base text-gray-900'>
-											{new Date(expense.date).toLocaleDateString()}
-										</td>
-										<td className='px-6 py-4 whitespace-nowrap'>
-											<span
-												className={`px-3 py-1 rounded-full text-sm font-medium ${
-													CATEGORY_COLORS[expense.category] ||
-													"bg-gray-100 text-gray-800"
-												}`}
-											>
-												{expense.category}
-											</span>
-										</td>
-										<td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900'>
-											₹{expense.amount.toFixed(2)}
-										</td>
-										<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-											{expense.paymentMode}
-										</td>
-										<td className='px-6 py-4 whitespace-nowrap text-sm font-medium'>
-											<div className='flex gap-3'>
-												<button
-													onClick={() => handleEdit(expense)}
-													className='text-indigo-600 cursor-pointer hover:text-indigo-900 transition-colors p-1 hover:bg-indigo-50 rounded'
-													title='Edit Expense'
-												>
-													<Edit size={18} />
-												</button>
-												<button
-													onClick={() => handleDeleteClick(expense)}
-													className='text-red-600 cursor-pointer hover:text-red-900 transition-colors p-1 hover:bg-red-50 rounded'
-													title='Delete Expense'
-												>
-													<Trash size={18} />
-												</button>
-											</div>
-										</td>
+					<>
+						{/* Desktop view */}
+						<div className='hidden md:block overflow-x-auto'>
+							<table className='min-w-full divide-y divide-gray-200'>
+								<thead>
+									<tr>
+										<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+											Date
+										</th>
+										<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+											Category
+										</th>
+										<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+											Amount
+										</th>
+										<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+											Payment Mode
+										</th>
+										<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+											Actions
+										</th>
 									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
+								</thead>
+								<tbody className='bg-white divide-y divide-gray-200'>
+									{expenses.map((expense) => (
+										<tr
+											key={expense._id}
+											className='hover:bg-gray-50 transition-colors'
+										>
+											<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+												{new Date(expense.date).toLocaleDateString()}
+											</td>
+											<td className='px-6 py-4 whitespace-nowrap'>
+												<span
+													className={`px-3 py-1 rounded-full text-xs font-medium ${
+														CATEGORY_COLORS[expense.category] ||
+														"bg-gray-100 text-gray-800"
+													}`}
+												>
+													{expense.category}
+												</span>
+											</td>
+											<td className='px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900'>
+												₹{expense.amount.toFixed(2)}
+											</td>
+											<td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
+												{expense.paymentMode}
+											</td>
+											<td className='px-6 py-4 whitespace-nowrap text-sm font-medium'>
+												<div className='flex gap-3'>
+													<button
+														onClick={() => handleEdit(expense)}
+														className='text-indigo-600 cursor-pointer hover:text-indigo-900 transition-colors p-1 hover:bg-indigo-50 rounded'
+														title='Edit Expense'
+													>
+														<Edit size={18} />
+													</button>
+													<button
+														onClick={() => handleDeleteClick(expense)}
+														className='text-red-600 cursor-pointer hover:text-red-900 transition-colors p-1 hover:bg-red-50 rounded'
+														title='Delete Expense'
+													>
+														<Trash size={18} />
+													</button>
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+						
+						{/* Mobile expense cards */}
+						<div className='md:hidden divide-y divide-gray-200'>
+							{expenses.map((expense) => (
+								<div key={expense._id} className="py-3">
+									<div className="flex justify-between items-center mb-1.5">
+										<div className="flex items-center gap-2">
+											<Calendar size={14} className="text-gray-500" />
+											<span className="text-xs text-gray-800">
+												{new Date(expense.date).toLocaleDateString()}
+											</span>
+										</div>
+										<span
+											className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+												CATEGORY_COLORS[expense.category] ||
+												"bg-gray-100 text-gray-800"
+											}`}
+										>
+											{expense.category}
+										</span>
+									</div>
+									
+									<div className="flex justify-between items-center mb-2">
+										<span className="text-sm font-semibold text-gray-900">
+											₹{expense.amount.toFixed(2)}
+										</span>
+										<div className="flex items-center gap-1 text-xs text-gray-600">
+											<CreditCard size={12} />
+											<span>{expense.paymentMode}</span>
+										</div>
+									</div>
+									
+									{expense.notes && (
+										<p className="text-xs text-gray-500 mb-2 line-clamp-1">{expense.notes}</p>
+									)}
+									
+									<div className="flex gap-2 mt-1">
+										<button
+											onClick={() => handleEdit(expense)}
+											className="text-xs flex items-center gap-1 text-indigo-600 cursor-pointer p-1 hover:bg-indigo-50 rounded"
+										>
+											<Edit size={14} />
+											Edit
+										</button>
+										<button
+											onClick={() => handleDeleteClick(expense)}
+											className="text-xs flex items-center gap-1 text-red-600 cursor-pointer p-1 hover:bg-red-50 rounded"
+										>
+											<Trash size={14} />
+											Delete
+										</button>
+									</div>
+								</div>
+							))}
+						</div>
+					</>
 				) : (
-					<div className='py-8 text-center'>
-						<p className='text-gray-500'>
+					<div className='py-6 md:py-8 text-center'>
+						<p className='text-gray-500 text-xs md:text-sm'>
 							No expenses found. Add your first expense!
 						</p>
 					</div>

@@ -140,10 +140,10 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
   
   return (
     <div className='fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50'>
-      <div className='bg-white m-5 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto'>
-        <div className='flex justify-between items-center border-b px-6 py-4'>
-          <h2 className='text-xl font-semibold text-gray-800 flex items-center'>
-            <Calculator size={20} className='mr-2' />
+      <div className='bg-white m-4 rounded-lg shadow-xl w-full max-w-full md:max-w-2xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto'>
+        <div className='flex justify-between items-center border-b px-3 md:px-6 py-3 md:py-4'>
+          <h2 className='text-lg md:text-xl font-semibold text-gray-800 flex items-center'>
+            <Calculator size={18} className='mr-2' />
             Price Calculator
           </h2>
           <button
@@ -154,30 +154,30 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        <div className='p-6 space-y-6'>
+        <div className='p-3 md:p-6 space-y-4 md:space-y-6'>
           {/* Book Selection */}
           <div className='border-b pb-4'>
-            <h3 className='text-lg font-medium text-gray-800 mb-4'>
+            <h3 className='text-base md:text-lg font-medium text-gray-800 mb-3 md:mb-4'>
               Select Books
             </h3>
 
             {availableBooks.length > 0 ? (
-              <div className='space-y-4'>
-                <div className='max-h-60 overflow-y-auto border rounded-md'>
+              <div className='space-y-3 md:space-y-4'>
+                <div className='max-h-48 md:max-h-60 overflow-y-auto border rounded-md'>
                   <table className='min-w-full divide-y divide-gray-200'>
                     <thead className='bg-gray-50 sticky top-0'>
                       <tr>
-                        <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        <th className='px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                           Select
                         </th>
-                        <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        <th className='px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                           Title
                         </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
-                        <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
+                        <th className='px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                           Price
                         </th>
-                        <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                        <th className='px-2 md:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
                           Weight
                         </th>
                       </tr>
@@ -193,7 +193,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                           }`}
                           onClick={() => handleBookSelect(book)}
                         >
-                          <td className='px-4 py-2'>
+                          <td className='px-2 md:px-4 py-2'>
                             <input
                               type='checkbox'
                               checked={selectedBooks.some(
@@ -203,14 +203,14 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                               className='h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'
                             />
                           </td>
-                          <td className='px-4 py-2 text-sm font-medium text-gray-900'>
+                          <td className='px-2 md:px-4 py-2 text-xs md:text-sm font-medium text-gray-900'>
                             {book.title}
                           </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">{book.author || '-'}</td>
-                          <td className='px-4 py-2 text-sm text-gray-500'>
+                          <td className="px-2 md:px-4 py-2 text-xs md:text-sm text-gray-500">{book.author || '-'}</td>
+                          <td className='px-2 md:px-4 py-2 text-xs md:text-sm text-gray-500'>
                             ₹{book.sellingPrice || 0}
                           </td>
-                          <td className='px-4 py-2 text-sm text-gray-500'>
+                          <td className='px-2 md:px-4 py-2 text-xs md:text-sm text-gray-500'>
                             {book.weight} kg
                           </td>
                         </tr>
@@ -227,12 +227,12 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
           </div>
 
           {/* Content Area */}
-          <div ref={contentRef} style={{ backgroundColor: '#ffffff', padding: '15px' }}>
+          <div ref={contentRef}>
             {selectedBooks.length > 0 && (
               <>
                 {/* Selected Books */}
-                <div className='space-y-4'>
-                  <h3 className='text-lg font-medium pdf-remove-heading' style={{ color: '#1f2937' }}>
+                <div className='space-y-3 md:space-y-4'>
+                  <h3 className='text-base md:text-lg font-medium pdf-remove-heading' style={{ color: '#1f2937' }}>
                     Selected Books
                   </h3>
 
@@ -240,13 +240,13 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                     <table className='min-w-full divide-y' style={{ borderColor: '#e5e7eb' }}>
                       <thead style={{ backgroundColor: '#f9fafb' }}>
                         <tr>
-                          <th className='px-4 py-3 text-left text-xs font-medium uppercase tracking-wider' style={{ color: '#6b7280' }}>
+                          <th className='px-2 md:px-4 py-2 md:py-3 text-left text-xs font-medium uppercase tracking-wider' style={{ color: '#6b7280' }}>
                             Book
                           </th>
-                          <th className='px-4 py-3 text-right text-xs font-medium uppercase tracking-wider' style={{ color: '#6b7280' }}>
+                          <th className='px-2 md:px-4 py-2 md:py-3 text-right text-xs font-medium uppercase tracking-wider' style={{ color: '#6b7280' }}>
                             Cost
                           </th>
-                          <th className='px-4 py-3 text-right text-xs font-medium uppercase tracking-wider' style={{ color: '#6b7280' }}>
+                          <th className='px-2 md:px-4 py-2 md:py-3 text-right text-xs font-medium uppercase tracking-wider' style={{ color: '#6b7280' }}>
                             Weight
                           </th>
                         </tr>
@@ -254,26 +254,27 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                       <tbody className='divide-y' style={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb' }}>
                         {selectedBooks.map((book) => (
                           <tr key={book._id}>
-                            <td className='px-4 py-3 whitespace-nowrap'>
+                            <td className='px-2 md:px-4 py-2 md:py-3 whitespace-nowrap'>
                               <div className='flex items-start space-x-2'>
                                 <ShoppingBag
-                                  size={16}
+                                  size={14}
+                                  className="md:size-16"
                                   style={{ color: '#4f46e5', marginTop: '0.25rem' }}
                                 />
                                 <div>
-                                  <div style={{ fontWeight: '500', color: '#111827' }}>
+                                  <div className="text-xs md:text-sm" style={{ fontWeight: '500', color: '#111827' }}>
                                     {book.title || "Untitled"}
                                   </div>
-                                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                                  <div className="text-xs md:text-sm" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
                                     {book.author || "Unknown author"}
                                   </div>
                                 </div>
                               </div>
                             </td>
-                            <td className='px-4 py-3 text-sm text-right' style={{ color: '#111827' }}>
+                            <td className='px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right' style={{ color: '#111827' }}>
                               ₹{book.sellingPrice || 0}
                             </td>
-                            <td className='px-4 py-3 text-sm text-right' style={{ color: '#6b7280' }}>
+                            <td className='px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right' style={{ color: '#6b7280' }}>
                               {book.weight} kg
                             </td>
                           </tr>
@@ -281,14 +282,14 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                       </tbody>
                       <tfoot style={{ backgroundColor: '#f9fafb' }}>
                         <tr>
-                          <td className='px-4 py-3 text-sm' style={{ fontWeight: '500' }}>
+                          <td className='px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm' style={{ fontWeight: '500' }}>
                             Total ({selectedBooks.length}{" "}
                             {selectedBooks.length === 1 ? "book" : "books"})
                           </td>
-                          <td className='px-4 py-3 text-sm text-right' style={{ fontWeight: '500' }}>
+                          <td className='px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right' style={{ fontWeight: '500' }}>
                             ₹{totalBookPrice}
                           </td>
-                          <td className='px-4 py-3 text-sm text-right'>
+                          <td className='px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right'>
                             {totalWeight.toFixed(2)} kg
                           </td>
                         </tr>
@@ -298,8 +299,8 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Price Summary */}
-                <div style={{ backgroundColor: '#f9fafb', padding: '1rem', borderRadius: '0.375rem', marginTop: '1rem' }}>
-                  <h3 style={{ fontSize: '1.125rem', fontWeight: '500', color: '#1f2937', marginBottom: '0.5rem' }}>
+                <div style={{ backgroundColor: '#f9fafb', padding: '0.75rem', borderRadius: '0.375rem', marginTop: '1rem' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: '500', color: '#1f2937', marginBottom: '0.5rem' }}>
                     Price Breakdown
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -331,18 +332,18 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
 
           {/* Error message if image generation failed */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm rounded relative">
               <strong className="font-bold">Error: </strong>
               <span className="block sm:inline">{error}</span>
             </div>
           )}
 
           {/* Actions */}
-          <div className='flex justify-end space-x-3 pt-4 border-t'>
+          <div className='flex justify-end space-x-2 md:space-x-3 pt-3 md:pt-4 border-t'>
             <button
               type='button'
               onClick={handleClear}
-              className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer'
+              className='px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer'
             >
               Clear
             </button>
@@ -352,12 +353,12 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                 type='button'
                 onClick={handleDownloadImage}
                 disabled={isGeneratingFile || selectedBooks.length === 0}
-                className='px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors cursor-pointer flex items-center space-x-2 disabled:bg-green-300'
+                className='px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors cursor-pointer flex items-center space-x-1 md:space-x-2 disabled:bg-green-300'
               >
                 {isGeneratingFile ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-b-2 border-white"></div>
                 ) : (
-                  <Download size={18} />
+                  <Download size={16} className="md:size-18" />
                 )}
                 <span>Download</span>
               </button>
@@ -366,7 +367,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
             <button
               type='button'
               onClick={onClose}
-              className='px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors cursor-pointer'
+              className='px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors cursor-pointer'
             >
               Close
             </button>
