@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Search, Filter, Pencil, Trash2, Calculator, Eye } from 'lucide-react';
+import { Plus, Search, Filter, Pencil, Trash2, Calculator, Eye, List } from 'lucide-react';
 import AddBookModal from '../components/books/AddBookModal';
 import EditBookModal from '../components/books/EditBookModal';
 import DeleteConfirmModal from '../components/books/DeleteConfirmModal';
 import ViewBookModal from '../components/books/ViewBookModal';
 import PriceCalculatorModal from '../components/books/PriceCalculatorModal';
+import AddBatchBooksModal from '../components/books/AddBatchBooksModal';
 // import CameraTestButton from '../components/books/CameraTestButton';
 
 
@@ -17,6 +18,7 @@ const Inventory = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
+  const [showBatchModal, setShowBatchModal] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
@@ -91,6 +93,7 @@ const Inventory = () => {
     setShowDeleteModal(false);
     setShowViewModal(false);
     setShowCalculatorModal(false);
+    setShowBatchModal(false);
     setSelectedBook(null);
     fetchBooks(); // Refresh the books list
   };
@@ -99,7 +102,7 @@ const Inventory = () => {
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 md:gap-4">
         <h1 className="text-xl md:text-2xl font-bold text-gray-800">Inventory Management</h1>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowCalculatorModal(true)}
             className="bg-gray-100 text-gray-800 px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-md flex items-center space-x-1 md:space-x-2 hover:bg-gray-200 transition-colors cursor-pointer"
@@ -114,6 +117,14 @@ const Inventory = () => {
           >
             <Plus size={16} className="md:h-5 md:w-5" />
             <span>Add Book</span>
+          </button>
+          <button
+            onClick={() => setShowBatchModal(true)}
+            className="bg-indigo-600 text-white px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base rounded-md flex items-center space-x-1 md:space-x-2 hover:bg-indigo-700 transition-colors cursor-pointer"
+          >
+            <List size={16} className="md:h-5 md:w-5" />
+            <span className="hidden xs:inline">Batch Import</span>
+            <span className="xs:hidden">Batch</span>
           </button>
         </div>
       </div>
@@ -301,6 +312,7 @@ const Inventory = () => {
       <EditBookModal isOpen={showEditModal} onClose={handleModalClose} book={selectedBook} />
       <DeleteConfirmModal isOpen={showDeleteModal} onClose={handleModalClose} book={selectedBook} />
       <PriceCalculatorModal isOpen={showCalculatorModal} onClose={handleModalClose} />
+      <AddBatchBooksModal isOpen={showBatchModal} onClose={handleModalClose} />
       {selectedBook && <ViewBookModal isOpen={showViewModal} onClose={handleModalClose} book={selectedBook} />}
     </div>
   );
