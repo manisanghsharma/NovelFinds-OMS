@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Search, User, ShoppingBag, Pencil, Trash2, Phone, MapPin } from 'lucide-react';
+import { Search, User, ShoppingBag, Pencil, Trash2, Phone, MapPin, ChevronUp, ChevronDown } from 'lucide-react';
 import CustomerDetailsModal from '../components/customers/CustomerDetailsModal';
 import EditCustomerModal from '../components/customers/EditCustomerModal';
 import DeleteCustomerModal from '../components/customers/DeleteCustomerModal';
@@ -76,6 +76,10 @@ const Customers = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: null
+  });
   
   useEffect(() => {
     fetchCustomers();
@@ -85,19 +89,79 @@ const Customers = () => {
     // Filter customers based on search term
     if (!customers) return;
     
+    let filtered = [...customers];
+    
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      const filtered = customers.filter(
+      filtered = filtered.filter(
         customer => 
           customer.name.toLowerCase().includes(term) ||
           customer.socialHandle.toLowerCase().includes(term) ||
           customer.phoneNumber.includes(term)
       );
-      setFilteredCustomers(filtered);
-    } else {
-      setFilteredCustomers(customers);
     }
-  }, [customers, searchTerm]);
+    
+    // Apply sorting if configured
+    if (sortConfig.key && sortConfig.direction) {
+      filtered.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+        
+        // Special handling for order counts
+        if (sortConfig.key === 'orderCount') {
+          aValue = a.orders?.length || 0;
+          bValue = b.orders?.length || 0;
+        }
+        
+        // Handle nulls/undefined values
+        if (aValue === undefined || aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (bValue === undefined || bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
+        
+        // For strings, do case-insensitive comparison
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+        
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    
+    setFilteredCustomers(filtered);
+  }, [customers, searchTerm, sortConfig]);
+  
+  const handleSort = (key) => {
+    setSortConfig(current => {
+      // If not sorting by this field yet, sort ascending
+      if (current.key !== key) {
+        return { key, direction: 'asc' };
+      }
+      
+      // If already sorting ascending by this field, toggle to descending
+      if (current.direction === 'asc') {
+        return { key, direction: 'desc' };
+      }
+      
+      // If already sorting descending, clear sorting (return to default)
+      return { key: null, direction: null };
+    });
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return null;
+    }
+    
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp size={14} className="ml-1" /> 
+      : <ChevronDown size={14} className="ml-1" />;
+  };
   
   const handleViewCustomer = (customer) => {
     setSelectedCustomer(customer);
@@ -121,6 +185,10 @@ const Customers = () => {
     setShowEditModal(false);
     setShowDeleteModal(false);
     setSelectedCustomer(null);
+    setSortConfig({
+      key: null,
+      direction: null
+    });
     
     if (refresh) {
       fetchCustomers(); // Refresh the customers list if data changed
@@ -227,9 +295,33 @@ const Customers = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center">
+                      <span>Customer</span>
+                      {getSortIcon('name')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('phoneNumber')}
+                  >
+                    <div className="flex items-center">
+                      <span>Contact</span>
+                      {getSortIcon('phoneNumber')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('orderCount')}
+                  >
+                    <div className="flex items-center">
+                      <span>Orders</span>
+                      {getSortIcon('orderCount')}
+                    </div>
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>

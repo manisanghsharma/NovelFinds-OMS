@@ -32,6 +32,8 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
   // Books that are available for selection (available books plus the ones in the current order)
   const [combinedAvailableBooks, setCombinedAvailableBooks] = useState([]);
   
+  const [bookSearchTerm, setBookSearchTerm] = useState('');
+  
   const {
     register,
     handleSubmit,
@@ -217,6 +219,17 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
       setSelectedBooks([...selectedBooks, book]);
     }
   };
+  
+  // Alphabetically sorted and filtered books
+  const filteredBooks = combinedAvailableBooks
+    .filter(book => {
+      const term = bookSearchTerm.toLowerCase();
+      return (
+        book.title.toLowerCase().includes(term) ||
+        (book.author && book.author.toLowerCase().includes(term))
+      );
+    })
+    .sort((a, b) => a.title.localeCompare(b.title));
   
   // Submit form
   const onSubmit = async (data) => {
@@ -444,8 +457,17 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
           {/* Book Selection */}
           <div className="border-b pb-3 md:pb-4">
             <h3 className="text-base md:text-lg font-medium text-gray-800 mb-3 md:mb-4">Select Books</h3>
-            
-            {combinedAvailableBooks.length > 0 ? (
+            {/* Book Search Bar */}
+            <div className="mb-2">
+              <input
+                type="text"
+                value={bookSearchTerm}
+                onChange={e => setBookSearchTerm(e.target.value)}
+                placeholder="Search books by title or author..."
+                className="w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-xs md:text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            {filteredBooks.length > 0 ? (
               <div className="space-y-3 md:space-y-4">
                 <div className="max-h-40 md:max-h-60 overflow-y-auto border rounded-md">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -459,7 +481,7 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {combinedAvailableBooks.map(book => (
+                      {filteredBooks.map(book => (
                         <tr 
                           key={book._id} 
                           className={`hover:bg-gray-50 cursor-pointer text-xs md:text-sm ${
@@ -484,17 +506,56 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
                     </tbody>
                   </table>
                 </div>
-                
-                <div className="bg-gray-50 p-2 md:p-3 rounded-md">
-                  <div className="flex justify-between text-xs md:text-sm">
-                    <span>Selected Books:</span>
-                    <span>{selectedBooks.length}</span>
+                {/* Selected Books List */}
+                {selectedBooks.length > 0 && (
+                  <div className="bg-gray-50 p-2 md:p-3 rounded-md">
+                    <div className="overflow-x-auto -mx-2 md:mx-0">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book</th>
+                            <th className="px-3 py-2 md:px-4 md:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                            <th className="px-3 py-2 md:px-4 md:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {selectedBooks.map((book) => (
+                            <tr key={book._id}>
+                              <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap">
+                                <div className="flex items-start space-x-2">
+                                  <span className="inline-block"><svg width="14" height="14" fill="none" stroke="#4f46e5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600 mt-1" viewBox="0 0 24 24"><path d="M6 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2"/><path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2"/></svg></span>
+                                  <div>
+                                    <div className="text-xs md:text-sm font-medium text-gray-900">{book.title || "Untitled"}</div>
+                                    <div className="text-xs text-gray-500">{book.author || "Unknown author"}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right text-gray-900">₹{book.purchaseCost !== undefined ? book.purchaseCost : "0"}</td>
+                              <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right text-gray-500">{book.weight !== undefined ? `${book.weight} kg` : "N/A"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot className="bg-gray-50">
+                          <tr>
+                            <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm font-medium">
+                              Total ({selectedBooks.length} {selectedBooks.length === 1 ? "book" : "books"})
+                            </td>
+                            <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right font-medium">
+                              ₹{selectedBooks.reduce((sum, b) => sum + (parseFloat(b.purchaseCost) || 0), 0)}
+                            </td>
+                            <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right">
+                              {selectedBooks.reduce((sum, b) => sum + (parseFloat(b.weight) || 0), 0).toFixed(2)} kg
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-3 md:py-4 text-xs md:text-sm text-gray-500">
-                No books available for sale. Add some books first.
+                No books found.
               </div>
             )}
           </div>

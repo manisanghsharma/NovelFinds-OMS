@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Search, Filter, Pencil, Truck, Trash2, Eye, User } from 'lucide-react';
+import { Plus, Search, Filter, Pencil, Truck, Trash2, Eye, User, ChevronUp, ChevronDown } from 'lucide-react';
 import AddOrderModal from '../components/orders/AddOrderModal';
 import ShippingModal from '../components/orders/ShippingModal';
 import EditOrderModal from '../components/orders/EditOrderModal';
@@ -81,6 +81,10 @@ const Orders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [filteredOrders, setFilteredOrders] = useState([]);
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: null
+  });
   
   useEffect(() => {
     fetchOrders();
@@ -107,11 +111,79 @@ const Orders = () => {
       filtered = filtered.filter(order => order.status === statusFilter);
     }
     
-    // Sort by date (newest first)
-    filtered.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+    // Apply sorting if configured
+    if (sortConfig.key && sortConfig.direction) {
+      filtered.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+        
+        // Special handling for nested properties
+        if (sortConfig.key === 'customer.name') {
+          aValue = a.customer?.name;
+          bValue = b.customer?.name;
+        } else if (sortConfig.key === 'customer.socialHandle') {
+          aValue = a.customer?.socialHandle;
+          bValue = b.customer?.socialHandle;
+        } else if (sortConfig.key === 'orderDate') {
+          aValue = new Date(aValue).getTime();
+          bValue = new Date(bValue).getTime();
+        } else if (sortConfig.key === 'bookCount') {
+          aValue = a.books?.length || 0;
+          bValue = b.books?.length || 0;
+        }
+        
+        // Handle nulls/undefined values
+        if (aValue === undefined || aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (bValue === undefined || bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
+        
+        // For strings, do case-insensitive comparison
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+        
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    } else {
+      // Default sort by date (newest first) if no sorting is configured
+      filtered.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+    }
     
     setFilteredOrders(filtered);
-  }, [orders, searchTerm, statusFilter]);
+  }, [orders, searchTerm, statusFilter, sortConfig]);
+  
+  const handleSort = (key) => {
+    setSortConfig(current => {
+      // If not sorting by this field yet, sort ascending
+      if (current.key !== key) {
+        return { key, direction: 'asc' };
+      }
+      
+      // If already sorting ascending by this field, toggle to descending
+      if (current.direction === 'asc') {
+        return { key, direction: 'desc' };
+      }
+      
+      // If already sorting descending, clear sorting (return to default)
+      return { key: null, direction: null };
+    });
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return null;
+    }
+    
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp size={14} className="ml-1" /> 
+      : <ChevronDown size={14} className="ml-1" />;
+  };
   
   const handleShippingClick = (order) => {
     setSelectedOrder(order);
@@ -146,6 +218,10 @@ const Orders = () => {
   const resetFilters = () => {
     setSearchTerm('');
     setStatusFilter('');
+    setSortConfig({
+      key: null,
+      direction: null
+    });
   };
   
   return (
@@ -301,12 +377,60 @@ const Orders = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                  <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Books</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('orderDate')}
+                  >
+                    <div className="flex items-center">
+                      <span>Date</span>
+                      {getSortIcon('orderDate')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('customer.name')}
+                  >
+                    <div className="flex items-center">
+                      <span>Customer</span>
+                      {getSortIcon('customer.name')}
+                    </div>
+                  </th>
+                  <th 
+                    className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('bookCount')}
+                  >
+                    <div className="flex items-center">
+                      <span>Books</span>
+                      {getSortIcon('bookCount')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('amountReceived')}
+                  >
+                    <div className="flex items-center">
+                      <span>Amount</span>
+                      {getSortIcon('amountReceived')}
+                    </div>
+                  </th>
+                  <th 
+                    className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('netProfit')}
+                  >
+                    <div className="flex items-center">
+                      <span>Profit</span>
+                      {getSortIcon('netProfit')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('status')}
+                  >
+                    <div className="flex items-center">
+                      <span>Status</span>
+                      {getSortIcon('status')}
+                    </div>
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>

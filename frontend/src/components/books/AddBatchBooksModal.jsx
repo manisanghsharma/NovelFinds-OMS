@@ -19,7 +19,7 @@ const AddBatchBooksModal = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   // Example format for the text area
-  const exampleFormat = `{ "title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "format": "hardcover", "purchaseCost": 200, "sellingPrice": 300, "weight": 0.5, "condition": "Good" }
+  const exampleFormat = `{ "title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "format": "hardcover", "purchaseCost": 200, "sellingPrice": 300, "weight": 0.5, "condition": "Good", "purchaseDate": "2023-06-15" }
 { "title": "To Kill a Mockingbird", "author": "Harper Lee", "format": "paperback", "purchaseCost": 80, "sellingPrice": 150, "weight": 0.3, "condition": "Very Good" }`;
 
   const parseEntry = (entry) => {
@@ -139,7 +139,8 @@ const AddBatchBooksModal = ({ isOpen, onClose }) => {
               <p className="font-medium mb-1">Format each line as a JSON object:</p>
               <p className="mb-1 font-mono overflow-x-auto whitespace-nowrap">&#123; "title": "Book Title", "author": "Author Name", "purchaseCost": 200, "sellingPrice": 300, "weight": 0.5 &#125;</p>
               <p className="text-xs text-gray-500">Required fields: title, purchaseCost, sellingPrice, weight</p>
-              <p className="text-xs text-gray-500 mt-1">Optional fields: author, isbn, genre, format, condition, notes</p>
+              <p className="text-xs text-gray-500 mt-1">Optional fields: purchaseDate (defaults to today), author, isbn, genre, format, condition, notes</p>
+              <p className="text-xs text-gray-500 mt-1">Date format: "YYYY-MM-DD" (e.g., "2023-07-15")</p>
             </div>
             <textarea
               value={batchText}

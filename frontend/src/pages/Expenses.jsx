@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { DollarSign, Plus, Filter, Download, Edit, Trash, FileDown, BarChart2, PieChart, Eye, EyeOff, Calendar, CreditCard } from 'lucide-react';
+import { DollarSign, Plus, Filter, Download, Edit, Trash, FileDown, BarChart2, PieChart, Eye, EyeOff, Calendar, CreditCard, ChevronUp, ChevronDown } from 'lucide-react';
 import { Bar, Pie } from 'react-chartjs-2';
 import { toast } from 'react-hot-toast';
 import {
@@ -91,6 +91,12 @@ const Expenses = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  
+  // State for sorting
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: null
+  });
   
   // Fetch data on initial load
   useEffect(() => {
@@ -187,6 +193,35 @@ const Expenses = () => {
     }
   };
   
+  // Handle sort
+  const handleSort = (key) => {
+    setSortConfig(current => {
+      // If not sorting by this field yet, sort ascending
+      if (current.key !== key) {
+        return { key, direction: 'asc' };
+      }
+      
+      // If already sorting ascending by this field, toggle to descending
+      if (current.direction === 'asc') {
+        return { key, direction: 'desc' };
+      }
+      
+      // If already sorting descending, clear sorting (return to default)
+      return { key: null, direction: null };
+    });
+  };
+  
+  // Get sort icon for column headers
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return null;
+    }
+    
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp size={14} className="ml-1" /> 
+      : <ChevronDown size={14} className="ml-1" />;
+  };
+  
   // Handle filter change
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -197,6 +232,11 @@ const Expenses = () => {
   const applyFilters = async () => {
     await fetchExpenses(filter);
     setShowFilters(false);
+    // Reset sorting when filters are applied
+    setSortConfig({
+      key: null,
+      direction: null
+    });
   };
   
   // Reset filters
@@ -207,6 +247,13 @@ const Expenses = () => {
       category: '',
       paymentMode: ''
     });
+    
+    // Reset sorting when filters are reset
+    setSortConfig({
+      key: null,
+      direction: null
+    });
+    
     await fetchExpenses();
     setShowFilters(false);
   };
@@ -295,6 +342,38 @@ const Expenses = () => {
       setShowOpeningBalanceForm(true);
     }
   };
+  
+  // Sort expenses based on current sort config
+  const sortedExpenses = [...expenses].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    
+    let aValue = a[sortConfig.key];
+    let bValue = b[sortConfig.key];
+    
+    // Special handling for dates
+    if (sortConfig.key === 'date') {
+      aValue = new Date(aValue).getTime();
+      bValue = new Date(bValue).getTime();
+    }
+    
+    // Handle nulls/undefined values
+    if (aValue === undefined || aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (bValue === undefined || bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
+    
+    // For strings, do case-insensitive comparison
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      aValue = aValue.toLowerCase();
+      bValue = bValue.toLowerCase();
+    }
+    
+    if (aValue < bValue) {
+      return sortConfig.direction === 'asc' ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortConfig.direction === 'asc' ? 1 : -1;
+    }
+    return 0;
+  });
   
   return (
 		<div className='space-y-4 md:space-y-8 pb-4 md:pb-8'>
@@ -654,17 +733,41 @@ const Expenses = () => {
 							<table className='min-w-full divide-y divide-gray-200'>
 								<thead>
 									<tr>
-										<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-											Date
+										<th 
+                      className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+                      onClick={() => handleSort('date')}
+                    >
+											<div className="flex items-center">
+                        <span>Date</span>
+                        {getSortIcon('date')}
+                      </div>
 										</th>
-										<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-											Category
+										<th 
+                      className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+                      onClick={() => handleSort('category')}
+                    >
+											<div className="flex items-center">
+                        <span>Category</span>
+                        {getSortIcon('category')}
+                      </div>
 										</th>
-										<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-											Amount
+										<th 
+                      className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+                      onClick={() => handleSort('amount')}
+                    >
+											<div className="flex items-center">
+                        <span>Amount</span>
+                        {getSortIcon('amount')}
+                      </div>
 										</th>
-										<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-											Payment Mode
+										<th 
+                      className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+                      onClick={() => handleSort('paymentMode')}
+                    >
+											<div className="flex items-center">
+                        <span>Payment Mode</span>
+                        {getSortIcon('paymentMode')}
+                      </div>
 										</th>
 										<th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
 											Actions
@@ -672,7 +775,7 @@ const Expenses = () => {
 									</tr>
 								</thead>
 								<tbody className='bg-white divide-y divide-gray-200'>
-									{expenses.map((expense) => (
+									{sortedExpenses.map((expense) => (
 										<tr
 											key={expense._id}
 											className='hover:bg-gray-50 transition-colors'
@@ -722,7 +825,7 @@ const Expenses = () => {
 						
 						{/* Mobile expense cards */}
 						<div className='md:hidden divide-y divide-gray-200'>
-							{expenses.map((expense) => (
+							{sortedExpenses.map((expense) => (
 								<div key={expense._id} className="py-3">
 									<div className="flex justify-between items-center mb-1.5">
 										<div className="flex items-center gap-2">

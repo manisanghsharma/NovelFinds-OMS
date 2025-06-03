@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Search, Filter, Pencil, Trash2, Calculator, Eye, List } from 'lucide-react';
+import { Plus, Search, Filter, Pencil, Trash2, Calculator, Eye, List, ChevronUp, ChevronDown } from 'lucide-react';
 import AddBookModal from '../components/books/AddBookModal';
 import EditBookModal from '../components/books/EditBookModal';
 import DeleteConfirmModal from '../components/books/DeleteConfirmModal';
@@ -25,6 +25,10 @@ const Inventory = () => {
     status: '',
   });
   const [filteredBooks, setFilteredBooks] = useState([]);
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: null
+  });
   
   useEffect(() => {
     fetchBooks();
@@ -52,8 +56,40 @@ const Inventory = () => {
       filtered = filtered.filter(book => book.status === filters.status);
     }
     
+    // Apply sorting if configured
+    if (sortConfig.key && sortConfig.direction) {
+      filtered.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+        
+        // Special handling for dates
+        if (sortConfig.key === 'purchaseDate') {
+          aValue = new Date(aValue).getTime();
+          bValue = new Date(bValue).getTime();
+        }
+        
+        // Handle nulls/undefined values
+        if (aValue === undefined || aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (bValue === undefined || bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
+        
+        // For strings, do case-insensitive comparison
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+        
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    
     setFilteredBooks(filtered);
-  }, [books, searchTerm, filters]);
+  }, [books, searchTerm, filters, sortConfig]);
   
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -68,6 +104,37 @@ const Inventory = () => {
     setFilters({
       status: '',
     });
+    setSortConfig({
+      key: null,
+      direction: null
+    });
+  };
+
+  const handleSort = (key) => {
+    setSortConfig(current => {
+      // If not sorting by this field yet, sort ascending
+      if (current.key !== key) {
+        return { key, direction: 'asc' };
+      }
+      
+      // If already sorting ascending by this field, toggle to descending
+      if (current.direction === 'asc') {
+        return { key, direction: 'desc' };
+      }
+      
+      // If already sorting descending, clear sorting (return to default)
+      return { key: null, direction: null };
+    });
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return null;
+    }
+    
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp size={14} className="ml-1" /> 
+      : <ChevronDown size={14} className="ml-1" />;
   };
 
   const handleEditClick = (e, book) => {
@@ -245,11 +312,51 @@ const Inventory = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchase Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('title')}
+                  >
+                    <div className="flex items-center">
+                      <span>Title</span>
+                      {getSortIcon('title')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('author')}
+                  >
+                    <div className="flex items-center">
+                      <span>Author</span>
+                      {getSortIcon('author')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('purchaseDate')}
+                  >
+                    <div className="flex items-center">
+                      <span>Purchase Date</span>
+                      {getSortIcon('purchaseDate')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('purchaseCost')}
+                  >
+                    <div className="flex items-center">
+                      <span>Cost</span>
+                      {getSortIcon('purchaseCost')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort('status')}
+                  >
+                    <div className="flex items-center">
+                      <span>Status</span>
+                      {getSortIcon('status')}
+                    </div>
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>

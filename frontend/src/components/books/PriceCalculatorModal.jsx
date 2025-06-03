@@ -13,6 +13,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
   const [totalWeight, setTotalWeight] = useState(0);
   const [isGeneratingFile, setIsGeneratingFile] = useState(false);
   const [error, setError] = useState(null);
+  const [bookSearchTerm, setBookSearchTerm] = useState('');
   
   // Refs to capture for image
   const contentRef = useRef(null);
@@ -136,21 +137,32 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
     }
   };
   
+  // Alphabetically sorted and filtered books
+  const filteredBooks = availableBooks
+    .filter(book => {
+      const term = bookSearchTerm.toLowerCase();
+      return (
+        book.title.toLowerCase().includes(term) ||
+        (book.author && book.author.toLowerCase().includes(term))
+      );
+    })
+    .sort((a, b) => a.title.localeCompare(b.title));
+  
   if (!isOpen) return null;
   
   return (
     <div className='fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50'>
-      <div className='bg-white m-4 rounded-lg shadow-xl w-full max-w-full md:max-w-2xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto'>
+      <div className='bg-white m-4 rounded-lg shadow-xl w-full max-w-full md:max-w-3xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto'>
         <div className='flex justify-between items-center border-b px-3 md:px-6 py-3 md:py-4'>
           <h2 className='text-lg md:text-xl font-semibold text-gray-800 flex items-center'>
-            <Calculator size={18} className='mr-2' />
+            <Calculator size={16} className='mr-2' />
             Price Calculator
           </h2>
           <button
             onClick={onClose}
             className='text-gray-400 hover:text-gray-600 cursor-pointer'
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
@@ -160,8 +172,17 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
             <h3 className='text-base md:text-lg font-medium text-gray-800 mb-3 md:mb-4'>
               Select Books
             </h3>
-
-            {availableBooks.length > 0 ? (
+            {/* Book Search Bar */}
+            <div className="mb-2">
+              <input
+                type="text"
+                value={bookSearchTerm}
+                onChange={e => setBookSearchTerm(e.target.value)}
+                placeholder="Search books by title or author..."
+                className="w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-xs md:text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            {filteredBooks.length > 0 ? (
               <div className='space-y-3 md:space-y-4'>
                 <div className='max-h-48 md:max-h-60 overflow-y-auto border rounded-md'>
                   <table className='min-w-full divide-y divide-gray-200'>
@@ -183,7 +204,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                       </tr>
                     </thead>
                     <tbody className='bg-white divide-y divide-gray-200'>
-                      {availableBooks.map((book) => (
+                      {filteredBooks.map((book) => (
                         <tr
                           key={book._id}
                           className={`hover:bg-gray-50 cursor-pointer ${
@@ -221,7 +242,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
               </div>
             ) : (
               <div className='text-center py-4 text-gray-500'>
-                No books available for sale.
+                No books found.
               </div>
             )}
           </div>
@@ -258,7 +279,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                               <div className='flex items-start space-x-2'>
                                 <ShoppingBag
                                   size={14}
-                                  className="md:size-16"
+                                  className="text-indigo-600 mt-1"
                                   style={{ color: '#4f46e5', marginTop: '0.25rem' }}
                                 />
                                 <div>
@@ -358,7 +379,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                 {isGeneratingFile ? (
                   <div className="animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-b-2 border-white"></div>
                 ) : (
-                  <Download size={16} className="md:size-18" />
+                  <Download size={14} className="mr-1" />
                 )}
                 <span>Download</span>
               </button>
