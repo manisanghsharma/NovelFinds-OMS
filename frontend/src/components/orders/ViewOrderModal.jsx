@@ -43,8 +43,11 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
   // Use the fetched order data, or fall back to initialOrder if needed
   const orderData = order || initialOrder;
   
-  // Calculate total expense
-  const totalBookCost = orderData.books?.reduce((sum, book) => sum + (parseFloat(book.purchaseCost) || 0), 0) || 0;
+  // Calculate total expense accounting for quantities
+  const totalBookCost = orderData.books?.reduce((sum, book) => {
+    const quantity = book.quantity || 1;
+    return sum + (parseFloat(book.purchaseCost) || 0) * quantity;
+  }, 0) || 0;
   const shippingCost = orderData.shippingCost || 0;
   const totalExpense = totalBookCost + shippingCost;
   const netProfit = (orderData.amountReceived || 0) - totalExpense;
@@ -152,6 +155,9 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 										<th className='px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
 											Book
 										</th>
+										<th className='px-3 py-2 md:px-4 md:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider'>
+											Quantity
+										</th>
 										<th className='px-3 py-2 md:px-4 md:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
 											Cost
 										</th>
@@ -179,15 +185,18 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 													</div>
 												</div>
 											</td>
+											<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-center text-gray-900'>
+												{book.quantity || 1}
+											</td>
 											<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right text-gray-900'>
 												₹
 												{book.purchaseCost !== undefined
-													? book.purchaseCost
+													? (book.purchaseCost * (book.quantity || 1)).toFixed(2)
 													: "0"}
 											</td>
 											<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right text-gray-500'>
 												{book.weight !== undefined
-													? `${book.weight} kg`
+													? `${(book.weight * (book.quantity || 1)).toFixed(2)} kg`
 													: "N/A"}
 											</td>
 										</tr>
@@ -199,14 +208,17 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 											Total ({orderData.books?.length || 0}{" "}
 											{orderData.books?.length === 1 ? "book" : "books"})
 										</td>
+										<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-center font-medium'>
+											{orderData.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) || 0}
+										</td>
 										<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right font-medium'>
-											₹{totalBookCost}
+											₹{totalBookCost.toFixed(2)}
 										</td>
 										<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right'>
 											{orderData.books
 												?.reduce((sum, book) => {
 													const weight = parseFloat(book.weight || 0);
-													return isNaN(weight) ? sum : sum + weight;
+													return isNaN(weight) ? sum : sum + (weight * (book.quantity || 1));
 												}, 0)
 												.toFixed(2)}{" "}
 											kg
@@ -251,7 +263,7 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 						<div className='bg-gray-50 p-3 md:p-4 rounded-md space-y-1 md:space-y-2 text-sm md:text-base'>
 							<div className='flex justify-between'>
 								<span className='text-gray-700'>Books Cost:</span>
-								<span className='font-medium'>₹{totalBookCost}</span>
+								<span className='font-medium'>₹{totalBookCost.toFixed(2)}</span>
 							</div>
 							<div className='flex justify-between'>
 								<span className='text-gray-700'>Shipping Cost:</span>
@@ -259,7 +271,7 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 							</div>
 							<div className='flex justify-between border-t border-gray-200 pt-1 md:pt-2'>
 								<span className='text-gray-700'>Total Expense:</span>
-								<span className='font-medium'>₹{totalExpense}</span>
+								<span className='font-medium'>₹{totalExpense.toFixed(2)}</span>
 							</div>
 							<div className='flex justify-between items-center pt-1'>
 								<div className='flex items-center text-gray-700'>
@@ -277,7 +289,7 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 										netProfit >= 0 ? "text-green-600" : "text-red-600"
 									}`}
 								>
-									₹{netProfit}
+									₹{netProfit.toFixed(2)}
 								</span>
 							</div>
 						</div>

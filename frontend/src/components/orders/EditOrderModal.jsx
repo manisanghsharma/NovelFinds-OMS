@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, ShoppingBag, Pencil } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { useAppContext } from '../../context/AppContext';
 import { orderApi } from '../../services/api';
@@ -28,11 +28,15 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
   const [totalBookCost, setTotalBookCost] = useState(0);
   const [totalExpense, setTotalExpense] = useState(0);
   const [netProfit, setNetProfit] = useState(0);
+  const [bookQuantities, setBookQuantities] = useState({});
   
   // Books that are available for selection (available books plus the ones in the current order)
   const [combinedAvailableBooks, setCombinedAvailableBooks] = useState([]);
   
   const [bookSearchTerm, setBookSearchTerm] = useState('');
+  
+  const [isShippingEditable, setIsShippingEditable] = useState(false);
+  const [manualShippingCost, setManualShippingCost] = useState(null);
   
   const {
     register,
@@ -104,9 +108,23 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
         setValue('customerSocial', order.customer.socialHandle || '');
       }
       
-      // Set selected books
+      // Set selected books and quantities
       if (order.books && order.books.length) {
         setSelectedBooks([...order.books]);
+        
+        // Initialize book quantities
+        const quantities = {};
+        order.books.forEach(book => {
+          if (book.quantity) {
+            quantities[book._id] = book.quantity;
+          }
+        });
+        setBookQuantities(quantities);
+      }
+      
+      // If order has a shipping cost, set it as the manual value
+      if (order.shippingCost !== undefined) {
+        setManualShippingCost(order.shippingCost);
       }
     }
   }, [order, isOpen, setValue]);
@@ -137,7 +155,18 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
     }
   }, [availableBooks, order]);
   
-  // Calculate shipping cost based on total weight
+  // Handle quantity change
+  const handleQuantityChange = (book, change) => {
+    const currentQty = bookQuantities[book._id] || 1;
+    const newQty = Math.max(1, Math.min(book.quantity || 10, currentQty + change));
+    
+    setBookQuantities({
+      ...bookQuantities,
+      [book._id]: newQty
+    });
+  };
+  
+  // Calculate shipping cost based on total weight and quantities
   useEffect(() => {
     if (selectedBooks.length === 0) {
       setShippingCost(0);
@@ -145,32 +174,90 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
       return;
     }
     
-    // Calculate total weight and book cost
+    // Calculate total weight and book cost with quantities
     const totalWeight = selectedBooks.reduce((sum, book) => {
       const weight = parseFloat(book.weight);
-      return sum + (isNaN(weight) ? 0 : weight);
+      const quantity = bookQuantities[book._id] || 1;
+      return sum + (isNaN(weight) ? 0 : weight * quantity);
     }, 0);
+    
     const bookCost = selectedBooks.reduce((sum, book) => {
       const cost = parseFloat(book.purchaseCost);
-      return sum + (isNaN(cost) ? 0 : cost);
+      const quantity = bookQuantities[book._id] || 1;
+      return sum + (isNaN(cost) ? 0 : cost * quantity);
     }, 0);
     
-    // Calculate shipping cost based on weight in kg
-    const calculateShippingCost = (weightKg) => {
-      if (isNaN(weightKg) || weightKg <= 0) return 0;
-      const weightGrams = weightKg * 1000;
-      if (weightGrams <= 500) return 42;
-      const extraWeight = weightGrams - 500;
-      const increments = Math.ceil(extraWeight / 500);
-      return 42 + increments * 19;
-    };
+    // Use manual shipping cost if it's being edited, otherwise calculate it
+    if (manualShippingCost !== null && isShippingEditable) {
+      setShippingCost(manualShippingCost);
+    } else {
+      // Calculate shipping cost based on weight in kg
+      const calculateShippingCost = (weightKg) => {
+        if (isNaN(weightKg) || weightKg <= 0) return 0;
+        const weightGrams = weightKg * 1000;
+        if (weightGrams <= 500) return 42;
+        const extraWeight = weightGrams - 500;
+        const increments = Math.ceil(extraWeight / 500);
+        return 42 + increments * 19;
+      };
+      
+      const calculatedShippingCost = calculateShippingCost(totalWeight);
+      setShippingCost(calculatedShippingCost);
+    }
     
-    const calculatedShippingCost = calculateShippingCost(totalWeight);
-    
-    setShippingCost(calculatedShippingCost);
     setTotalBookCost(bookCost);
     
-  }, [selectedBooks]);
+  }, [selectedBooks, bookQuantities, manualShippingCost, isShippingEditable]);
+  
+  // Check if the order has a different shipping cost than what would be automatically calculated
+  useEffect(() => {
+    if (order && order.shippingCost !== undefined && selectedBooks.length > 0) {
+      // Calculate what the shipping cost would be automatically
+      const totalWeight = selectedBooks.reduce((sum, book) => {
+        const weight = parseFloat(book.weight);
+        const quantity = bookQuantities[book._id] || 1;
+        return sum + (isNaN(weight) ? 0 : weight * quantity);
+      }, 0);
+      
+      const calculateShippingCost = (weightKg) => {
+        if (isNaN(weightKg) || weightKg <= 0) return 0;
+        const weightGrams = weightKg * 1000;
+        if (weightGrams <= 500) return 42;
+        const extraWeight = weightGrams - 500;
+        const increments = Math.ceil(extraWeight / 500);
+        return 42 + increments * 19;
+      };
+      
+      const calculatedShippingCost = calculateShippingCost(totalWeight);
+      
+      // If the shipping cost in the order is different from what would be calculated,
+      // it was likely manually edited - set editing mode to true
+      if (Math.abs(calculatedShippingCost - order.shippingCost) > 0.01) {
+        setIsShippingEditable(true);
+      }
+    }
+  }, [order, selectedBooks, bookQuantities]);
+
+  // When order loads, check if it has a custom shipping cost
+  useEffect(() => {
+    if (order && order.shippingCost) {
+      setManualShippingCost(order.shippingCost);
+    }
+  }, [order]);
+  
+  // Toggle shipping cost manual edit
+  const toggleShippingEdit = () => {
+    if (!isShippingEditable) {
+      setManualShippingCost(shippingCost);
+    }
+    setIsShippingEditable(!isShippingEditable);
+  };
+
+  // Handle shipping cost manual input change
+  const handleShippingCostChange = (e) => {
+    const value = parseFloat(e.target.value);
+    setManualShippingCost(isNaN(value) ? 0 : value);
+  };
   
   // Calculate total expense and net profit
   useEffect(() => {
@@ -215,8 +302,19 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
   const handleBookSelect = (book) => {
     if (selectedBooks.find(b => b._id === book._id)) {
       setSelectedBooks(selectedBooks.filter(b => b._id !== book._id));
+      
+      // Remove quantity for this book
+      const newQuantities = {...bookQuantities};
+      delete newQuantities[book._id];
+      setBookQuantities(newQuantities);
     } else {
       setSelectedBooks([...selectedBooks, book]);
+      
+      // Set default quantity to 1
+      setBookQuantities(prev => ({
+        ...prev,
+        [book._id]: 1
+      }));
     }
   };
   
@@ -286,13 +384,19 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
         }
       }
       
-      // Prepare order update data
+      // Prepare order update data with quantities
+      const bookOrders = selectedBooks.map(book => ({
+        bookId: book._id,
+        quantity: bookQuantities[book._id] || 1
+      }));
+      
       const updateData = {
         orderDate: data.orderDate,
         status: data.status,
         amountReceived: parseFloat(data.amountReceived) || 0,
-        bookIds: selectedBooks.map(book => book._id),
-        customerId: customerId
+        bookOrders: bookOrders,
+        customerId: customerId,
+        shippingCost: shippingCost
       };
       
       await updateOrder(order._id, updateData);
@@ -514,6 +618,7 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book</th>
+                            <th className="px-3 py-2 md:px-4 md:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
                             <th className="px-3 py-2 md:px-4 md:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
                             <th className="px-3 py-2 md:px-4 md:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
                           </tr>
@@ -523,15 +628,51 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
                             <tr key={book._id}>
                               <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap">
                                 <div className="flex items-start space-x-2">
-                                  <span className="inline-block"><svg width="14" height="14" fill="none" stroke="#4f46e5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600 mt-1" viewBox="0 0 24 24"><path d="M6 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2"/><path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2"/></svg></span>
+                                  <span className="inline-block">
+                                    <ShoppingBag
+                                      size={16}
+                                      className="text-indigo-600 flex-shrink-0 md:h-5 md:w-5"
+                                    />
+                                  </span>
                                   <div>
                                     <div className="text-xs md:text-sm font-medium text-gray-900">{book.title || "Untitled"}</div>
                                     <div className="text-xs text-gray-500">{book.author || "Unknown author"}</div>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right text-gray-900">₹{book.purchaseCost !== undefined ? book.purchaseCost : "0"}</td>
-                              <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right text-gray-500">{book.weight !== undefined ? `${book.weight} kg` : "N/A"}</td>
+                              <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-center">
+                                <div className="flex items-center justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleQuantityChange(book, -1);
+                                    }}
+                                    className="bg-gray-200 text-gray-600 rounded-l-md px-2 py-1 text-xs md:text-sm disabled:bg-gray-100 disabled:text-gray-400"
+                                    disabled={(bookQuantities[book._id] || 1) <= 1}
+                                  >
+                                    -
+                                  </button>
+                                  <span className="px-2 py-1 bg-gray-50">{bookQuantities[book._id] || 1}</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleQuantityChange(book, 1);
+                                    }}
+                                    className="bg-gray-200 text-gray-600 rounded-r-md px-2 py-1 text-xs md:text-sm disabled:bg-gray-100 disabled:text-gray-400"
+                                    disabled={(bookQuantities[book._id] || 1) >= (book.quantity || 10)}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right text-gray-900">
+                                ₹{book.purchaseCost !== undefined ? (book.purchaseCost * (bookQuantities[book._id] || 1)).toFixed(2) : "0"}
+                              </td>
+                              <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right text-gray-500">
+                                {book.weight !== undefined ? `${(book.weight * (bookQuantities[book._id] || 1)).toFixed(2)} kg` : "N/A"}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -540,11 +681,17 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
                             <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm font-medium">
                               Total ({selectedBooks.length} {selectedBooks.length === 1 ? "book" : "books"})
                             </td>
+                            <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-center font-medium">
+                              {selectedBooks.reduce((sum, book) => sum + (bookQuantities[book._id] || 1), 0)}
+                            </td>
                             <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right font-medium">
-                              ₹{selectedBooks.reduce((sum, b) => sum + (parseFloat(b.purchaseCost) || 0), 0)}
+                              ₹{totalBookCost.toFixed(2)}
                             </td>
                             <td className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right">
-                              {selectedBooks.reduce((sum, b) => sum + (parseFloat(b.weight) || 0), 0).toFixed(2)} kg
+                              {selectedBooks.reduce(
+                                (sum, book) => sum + ((parseFloat(book.weight) || 0) * (bookQuantities[book._id] || 1)),
+                                0
+                              ).toFixed(2)} kg
                             </td>
                           </tr>
                         </tfoot>
@@ -600,9 +747,33 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
                 <span>Book Cost:</span>
                 <span>₹{totalBookCost.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Shipping Cost:</span>
-                <span>₹{shippingCost.toFixed(2)}</span>
+              <div className="flex justify-between items-center">
+                <span className="flex items-center">
+                  Shipping Cost:
+                  <button 
+                    type="button" 
+                    onClick={toggleShippingEdit} 
+                    className="ml-2 p-1 hover:bg-gray-200 rounded-full cursor-pointer"
+                    title={isShippingEditable ? "Use automatic calculation" : "Edit shipping cost manually"}
+                  >
+                    <Pencil size={14} className={isShippingEditable ? "text-indigo-600" : "text-gray-500"} />
+                  </button>
+                </span>
+                {isShippingEditable ? (
+                  <div className="flex items-center">
+                    <span className="mr-1">₹</span>
+                    <input
+                      type="number"
+                      value={manualShippingCost}
+                      onChange={handleShippingCostChange}
+                      min="0"
+                      step="1"
+                      className="w-16 p-1 border border-gray-300 rounded text-right"
+                    />
+                  </div>
+                ) : (
+                  <span>₹{shippingCost.toFixed(2)}</span>
+                )}
               </div>
               <div className="flex justify-between">
                 <span>Total Expense:</span>

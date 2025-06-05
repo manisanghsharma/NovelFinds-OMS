@@ -36,7 +36,8 @@ const AddBookModal = ({ isOpen, onClose }) => {
       sellingPrice: '300',
       weight: '',
       condition: 'Good',
-      notes: ''
+      notes: '',
+      quantity: '1'
     }
   });
   
@@ -350,6 +351,23 @@ const AddBookModal = ({ isOpen, onClose }) => {
               />
               {errors.weight && (
                 <p className="mt-1 text-xs md:text-sm text-red-600">{errors.weight.message}</p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-gray-700 text-sm md:text-base mb-1 md:mb-2">
+                Quantity <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                {...register('quantity', { 
+                  required: 'Quantity is required',
+                  min: { value: 1, message: 'Quantity must be at least 1' }
+                })}
+                className="w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              {errors.quantity && (
+                <p className="mt-1 text-xs md:text-sm text-red-600">{errors.quantity.message}</p>
               )}
             </div>
           </div>

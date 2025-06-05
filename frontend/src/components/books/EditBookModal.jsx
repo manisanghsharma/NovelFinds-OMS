@@ -36,7 +36,8 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
       sellingPrice: '300',
       weight: '',
       condition: 'Good',
-      notes: ''
+      notes: '',
+      quantity: '1'
     }
   });
 
@@ -82,6 +83,7 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
       setValue('condition', book.condition || 'Good');
       setValue('notes', book.notes || '');
       setValue('status', book.status || 'available');
+      setValue('quantity', book.quantity || '1');
     }
   }, [book, isOpen, setValue]);
   
@@ -385,6 +387,23 @@ const EditBookModal = ({ isOpen, onClose, book }) => {
 								<p className='mt-1 text-xs md:text-sm text-red-600'>
 									{errors.weight.message}
 								</p>
+							)}
+						</div>
+
+						<div>
+							<label className="block text-gray-700 text-sm md:text-base mb-1 md:mb-2">
+								Quantity <span className="text-red-500">*</span>
+							</label>
+							<input
+								type="number"
+								{...register('quantity', { 
+									required: 'Quantity is required',
+									min: { value: 0, message: 'Quantity cannot be negative' }
+								})}
+								className="w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+							/>
+							{errors.quantity && (
+								<p className="mt-1 text-xs md:text-sm text-red-600">{errors.quantity.message}</p>
 							)}
 						</div>
 					</div>

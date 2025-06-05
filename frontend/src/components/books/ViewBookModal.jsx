@@ -61,7 +61,14 @@ const ViewBookModal = ({ isOpen, onClose, book: initialBook }) => {
           <div className="border-b pb-3 md:pb-4">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <div>
-                <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-1">{bookData.title}</h3>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-1">
+                  {bookData.title}
+                  {bookData.quantity !== undefined && (
+                    <span className="ml-2 text-sm md:text-base text-gray-600">
+                      (Quantity: {bookData.quantity})
+                    </span>
+                  )}
+                </h3>
                 {bookData.author && (
                   <p className="text-sm md:text-base text-gray-600 italic">by {bookData.author}</p>
                 )}

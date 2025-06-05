@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { X, Plus, Search, ShoppingBag } from 'lucide-react';
+import { X, Plus, Search, ShoppingBag, Pencil } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { toast } from 'react-hot-toast';
 
@@ -18,6 +18,7 @@ const AddOrderModal = ({ isOpen, onClose }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBooks, setSelectedBooks] = useState([]);
+  const [bookQuantities, setBookQuantities] = useState({});
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [shippingCost, setShippingCost] = useState(0);
@@ -25,6 +26,32 @@ const AddOrderModal = ({ isOpen, onClose }) => {
   const [totalExpense, setTotalExpense] = useState(0);
   const [netProfit, setNetProfit] = useState(0);
   const [bookSearchTerm, setBookSearchTerm] = useState('');
+  const [isShippingEditable, setIsShippingEditable] = useState(false);
+  const [manualShippingCost, setManualShippingCost] = useState(0);
+  
+  // Calculate shipping cost based on weight in kg
+  const calculateShippingCost = (weightKg) => {
+    if (isNaN(weightKg) || weightKg <= 0) return 0;
+    const weightGrams = weightKg * 1000;
+    if (weightGrams <= 500) return 42;
+    const extraWeight = weightGrams - 500;
+    const increments = Math.ceil(extraWeight / 500);
+    return 42 + increments * 19;
+  };
+  
+  // Toggle shipping cost manual edit
+  const toggleShippingEdit = () => {
+    if (!isShippingEditable) {
+      setManualShippingCost(shippingCost);
+    }
+    setIsShippingEditable(!isShippingEditable);
+  };
+
+  // Handle shipping cost manual input change
+  const handleShippingCostChange = (e) => {
+    const value = parseFloat(e.target.value);
+    setManualShippingCost(isNaN(value) ? 0 : value);
+  };
   
   const {
     register,
@@ -56,44 +83,6 @@ const AddOrderModal = ({ isOpen, onClose }) => {
       fetchAvailableBooks();
     }
   }, [isOpen, fetchAvailableBooks]);
-  
-  // Calculate shipping cost based on total weight
-  useEffect(() => {
-    if (selectedBooks.length === 0) {
-      setShippingCost(0);
-      setTotalBookCost(0);
-      return;
-    }
-    
-    // Calculate total weight and book cost
-    const totalWeight = selectedBooks.reduce((sum, book) => sum + book.weight, 0);
-    const bookCost = selectedBooks.reduce((sum, book) => sum + book.purchaseCost, 0);
-    
-    // Calculate shipping cost based on weight in kg
-    const calculateShippingCost = (weightKg) => {
-      if (isNaN(weightKg) || weightKg <= 0) return 0;
-      const weightGrams = weightKg * 1000;
-      if (weightGrams <= 500) return 42;
-      const extraWeight = weightGrams - 500;
-      const increments = Math.ceil(extraWeight / 500);
-      return 42 + increments * 19;
-    };
-    
-    const calculatedShippingCost = calculateShippingCost(totalWeight);
-    
-    setShippingCost(calculatedShippingCost);
-    setTotalBookCost(bookCost);
-    
-  }, [selectedBooks]);
-  
-  // Calculate total expense and net profit
-  useEffect(() => {
-    const expense = totalBookCost + shippingCost;
-    setTotalExpense(expense);
-    
-    const amount = parseFloat(amountReceived) || 0;
-    setNetProfit(amount - expense);
-  }, [totalBookCost, shippingCost, amountReceived]);
   
   // Handle customer search
   const handleCustomerSearch = async (query) => {
@@ -129,10 +118,57 @@ const AddOrderModal = ({ isOpen, onClose }) => {
   const handleBookSelect = (book) => {
     if (selectedBooks.find(b => b._id === book._id)) {
       setSelectedBooks(selectedBooks.filter(b => b._id !== book._id));
+      const newQuantities = {...bookQuantities};
+      delete newQuantities[book._id];
+      setBookQuantities(newQuantities);
     } else {
       setSelectedBooks([...selectedBooks, book]);
+      setBookQuantities(prev => ({
+        ...prev,
+        [book._id]: 1
+      }));
     }
   };
+  
+  // Handle quantity change
+  const handleQuantityChange = (book, change) => {
+    const currentQty = bookQuantities[book._id] || 1;
+    const newQty = Math.max(1, Math.min(book.quantity, currentQty + change));
+    
+    setBookQuantities({
+      ...bookQuantities,
+      [book._id]: newQty
+    });
+  };
+  
+  // Calculate total weight with quantities
+  useEffect(() => {
+    let weight = 0;
+    selectedBooks.forEach(book => {
+      const quantity = bookQuantities[book._id] || 1;
+      weight += (book.weight || 0) * quantity;
+    });
+    
+    // Use manual shipping cost if it's being edited, otherwise calculate it
+    if (isShippingEditable) {
+      setShippingCost(manualShippingCost);
+    } else {
+      const cost = calculateShippingCost(weight);
+      setShippingCost(cost);
+      // Keep manualShippingCost in sync with calculated cost when not manually editing
+      setManualShippingCost(cost);
+    }
+    
+    // Calculate total book cost with quantities
+    const bookCost = selectedBooks.reduce((sum, book) => {
+      const quantity = bookQuantities[book._id] || 1;
+      return sum + ((parseFloat(book.purchaseCost) || 0) * quantity);
+    }, 0);
+    
+    setTotalBookCost(bookCost);
+    setTotalExpense(bookCost + shippingCost);
+    setNetProfit(amountReceived ? parseFloat(amountReceived) - (bookCost + shippingCost) : 0);
+  }, [selectedBooks, bookQuantities, amountReceived, manualShippingCost, isShippingEditable]);
   
   // Alphabetically sorted and filtered books
   const filteredBooks = availableBooks
@@ -175,19 +211,26 @@ const AddOrderModal = ({ isOpen, onClose }) => {
         customerId = createdCustomer._id;
       }
       
-      // Prepare order data
+      // Prepare order data with book quantities
+      const bookOrders = selectedBooks.map(book => ({
+        bookId: book._id,
+        quantity: bookQuantities[book._id] || 1
+      }));
+      
       const orderData = {
         orderDate: data.orderDate,
         customerId,
-        bookIds: selectedBooks.map(book => book._id),
+        bookOrders,
         amountReceived: parseFloat(data.amountReceived),
-        status: data.status
+        status: data.status,
+        shippingCost: shippingCost
       };
       
       await createOrder(orderData);
       toast.success('Order added successfully');
       reset();
       setSelectedBooks([]);
+      setBookQuantities({});
       setSelectedCustomer(null);
       onClose();
       
@@ -462,6 +505,9 @@ const AddOrderModal = ({ isOpen, onClose }) => {
 														<th className='px-3 py-2 md:px-4 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
 															Book
 														</th>
+														<th className='px-3 py-2 md:px-4 md:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider'>
+															Quantity
+														</th>
 														<th className='px-3 py-2 md:px-4 md:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
 															Cost
 														</th>
@@ -491,15 +537,42 @@ const AddOrderModal = ({ isOpen, onClose }) => {
 																	</div>
 																</div>
 															</td>
+															<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-center'>
+																<div className="flex items-center justify-center">
+																	<button
+																		type="button"
+																		onClick={(e) => {
+																			e.stopPropagation();
+																			handleQuantityChange(book, -1);
+																		}}
+																		className="bg-gray-200 text-gray-600 rounded-l-md px-2 py-1 text-xs md:text-sm disabled:bg-gray-100 disabled:text-gray-400"
+																		disabled={(bookQuantities[book._id] || 1) <= 1}
+																	>
+																		-
+																	</button>
+																	<span className="px-2 py-1 bg-gray-50">{bookQuantities[book._id] || 1}</span>
+																	<button
+																		type="button"
+																		onClick={(e) => {
+																			e.stopPropagation();
+																			handleQuantityChange(book, 1);
+																		}}
+																		className="bg-gray-200 text-gray-600 rounded-r-md px-2 py-1 text-xs md:text-sm disabled:bg-gray-100 disabled:text-gray-400"
+																		disabled={(bookQuantities[book._id] || 1) >= book.quantity}
+																	>
+																		+
+																	</button>
+																</div>
+															</td>
 															<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right text-gray-900'>
 																₹
 																{book.purchaseCost !== undefined
-																	? book.purchaseCost
+																	? (book.purchaseCost * (bookQuantities[book._id] || 1)).toFixed(2)
 																	: "0"}
 															</td>
 															<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right text-gray-500'>
 																{book.weight !== undefined
-																	? `${book.weight} kg`
+																	? `${(book.weight * (bookQuantities[book._id] || 1)).toFixed(2)} kg`
 																	: "N/A"}
 															</td>
 														</tr>
@@ -511,21 +584,20 @@ const AddOrderModal = ({ isOpen, onClose }) => {
 															Total ({selectedBooks.length}{" "}
 															{selectedBooks.length === 1 ? "book" : "books"})
 														</td>
-														<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right font-medium'>
-															₹
+														<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-center font-medium'>
 															{selectedBooks.reduce(
-																(sum, b) =>
-																	sum + (parseFloat(b.purchaseCost) || 0),
+																(sum, book) => sum + (bookQuantities[book._id] || 1),
 																0
 															)}
 														</td>
+														<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right font-medium'>
+															₹{totalBookCost.toFixed(2)}
+														</td>
 														<td className='px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-right'>
-															{selectedBooks
-																.reduce(
-																	(sum, b) => sum + (parseFloat(b.weight) || 0),
-																	0
-																)
-																.toFixed(2)}{" "}
+															{selectedBooks.reduce(
+																(sum, book) => sum + ((parseFloat(book.weight) || 0) * (bookQuantities[book._id] || 1)),
+																0
+															).toFixed(2)}{" "}
 															kg
 														</td>
 													</tr>
@@ -590,9 +662,33 @@ const AddOrderModal = ({ isOpen, onClose }) => {
 								<span>Book Cost:</span>
 								<span>₹{totalBookCost.toFixed(2)}</span>
 							</div>
-							<div className='flex justify-between'>
-								<span>Shipping Cost:</span>
-								<span>₹{shippingCost.toFixed(2)}</span>
+							<div className='flex justify-between items-center'>
+								<span className="flex items-center">
+									Shipping Cost:
+									<button 
+										type="button" 
+										onClick={toggleShippingEdit} 
+										className="ml-2 p-1 hover:bg-gray-200 rounded-full cursor-pointer"
+										title={isShippingEditable ? "Use automatic calculation" : "Edit shipping cost manually"}
+									>
+										<Pencil size={14} className={isShippingEditable ? "text-indigo-600" : "text-gray-500"} />
+									</button>
+								</span>
+								{isShippingEditable ? (
+									<div className="flex items-center">
+										<span className="mr-1">₹</span>
+										<input
+											type="number"
+											value={manualShippingCost}
+											onChange={handleShippingCostChange}
+											min="0"
+											step="1"
+											className="w-16 p-1 border border-gray-300 rounded text-right"
+										/>
+									</div>
+								) : (
+									<span>₹{shippingCost.toFixed(2)}</span>
+								)}
 							</div>
 							<div className='flex justify-between'>
 								<span>Total Expense:</span>
@@ -620,6 +716,7 @@ const AddOrderModal = ({ isOpen, onClose }) => {
 							onClick={() => {
 								reset();
 								setSelectedBooks([]);
+								setBookQuantities({});
 								setSelectedCustomer(null);
 								onClose();
 							}}

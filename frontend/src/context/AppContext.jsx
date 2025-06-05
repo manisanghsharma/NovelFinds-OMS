@@ -37,6 +37,7 @@ export const AppProvider = ({ children }) => {
     'Books', 
     'Ads', 
     'Tools', 
+    'Shipping',
     'Misc'
   ]);
   const [paymentModes] = useState(['Cash', 'UPI', 'Bank', 'Other']);
@@ -184,7 +185,9 @@ export const AppProvider = ({ children }) => {
   // Create a new book
   const createBook = async (bookData) => {
     try {
+      console.log('Creating book with data:', bookData);
       const newBook = await bookApi.createBook(bookData);
+      console.log('Book created:', newBook);
       setBooks(prevBooks => [...prevBooks, newBook]);
       if (newBook.status === 'available') {
         setAvailableBooks(prevBooks => [...prevBooks, newBook]);
@@ -199,7 +202,9 @@ export const AppProvider = ({ children }) => {
   // Update a book
   const updateBook = async (id, bookData) => {
     try {
+      console.log('Updating book with id:', id, 'and data:', bookData);
       const updatedBook = await bookApi.updateBook(id, bookData);
+      console.log('Book updated:', updatedBook);
       setBooks(prevBooks => 
         prevBooks.map(book => book._id === id ? updatedBook : book)
       );

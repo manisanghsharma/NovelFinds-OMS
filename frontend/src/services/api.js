@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://novelfindsomsbackend-production.up.railway.app/api';
+const API_URL = 'http://localhost:5002/api';
 
 // Book API calls
 export const bookApi = {

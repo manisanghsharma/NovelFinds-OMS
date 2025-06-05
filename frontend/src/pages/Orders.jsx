@@ -128,8 +128,9 @@ const Orders = () => {
           aValue = new Date(aValue).getTime();
           bValue = new Date(bValue).getTime();
         } else if (sortConfig.key === 'bookCount') {
-          aValue = a.books?.length || 0;
-          bValue = b.books?.length || 0;
+          // Calculate total book quantity including multiple quantities
+          aValue = a.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) || 0;
+          bValue = b.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) || 0;
         }
         
         // Handle nulls/undefined values
@@ -307,13 +308,13 @@ const Orders = () => {
                 <div className="flex justify-between items-center mb-2">
                   <div>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
-                      {order.books?.length} {order.books?.length === 1 ? 'Book' : 'Books'}
+                      {order.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) || 0} {order.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) === 1 ? 'Book' : 'Books'}
                     </span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="text-sm font-medium text-gray-700">₹{order.amountReceived}</div>
+                    <div className="text-sm font-medium text-gray-700">₹{order.amountReceived?.toFixed(2) || '0.00'}</div>
                     <div className={`text-xs font-medium ${order.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      ₹{order.netProfit}
+                      ₹{order.netProfit?.toFixed(2) || '0.00'}
                     </div>
                   </div>
                 </div>
@@ -455,15 +456,15 @@ const Orders = () => {
                     </td>
                     <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
                       <span className="px-3 py-1 inline-flex text-sm leading-5 font-medium rounded-full bg-indigo-50 text-indigo-700">
-                        {order.books?.length} {order.books?.length === 1 ? 'Book' : 'Books'}
+                        {order.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) || 0} {order.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) === 1 ? 'Book' : 'Books'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
-                      ₹{order.amountReceived}
+                      ₹{order.amountReceived?.toFixed(2) || '0.00'}
                     </td>
                     <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <span className={`${order.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        ₹{order.netProfit}
+                        ₹{order.netProfit?.toFixed(2) || '0.00'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

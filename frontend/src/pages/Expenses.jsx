@@ -35,6 +35,7 @@ const CHART_COLORS = {
   'Books':             { bg: 'rgba(153, 102, 255, 0.6)', tailwind: 'bg-purple-100 text-purple-800' },
   'Ads':               { bg: 'rgba(255, 206, 86, 0.6)',  tailwind: 'bg-yellow-100 text-yellow-800' },
   'Tools':             { bg: 'rgba(255, 159, 64, 0.6)',  tailwind: 'bg-orange-100 text-orange-800' },
+  'Shipping':          { bg: 'rgba(111, 214, 255, 0.6)', tailwind: 'bg-sky-100 text-sky-800' },
   'Misc':              { bg: 'rgba(75, 192, 192, 0.6)',  tailwind: 'bg-teal-100 text-teal-800' }
 };
 
