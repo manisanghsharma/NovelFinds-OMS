@@ -206,14 +206,18 @@ const Orders = () => {
     setShowViewModal(true);
   };
   
-  const handleModalClose = () => {
+  const handleModalClose = (shouldRefresh = false) => {
     setShowAddModal(false);
     setShowShippingModal(false);
     setShowEditModal(false);
     setShowDeleteModal(false);
     setShowViewModal(false);
     setSelectedOrder(null);
-    fetchOrders(); // Refresh orders after modal closes
+    
+    // Only fetch orders if a change was made (indicated by shouldRefresh parameter)
+    if (shouldRefresh) {
+      fetchOrders();
+    }
   };
   
   const resetFilters = () => {

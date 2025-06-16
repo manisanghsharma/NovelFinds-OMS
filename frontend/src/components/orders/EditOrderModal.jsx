@@ -402,7 +402,7 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
       await updateOrder(order._id, updateData);
       await fetchOrders(); // Refetch orders to update the list
       toast.success('Order updated successfully');
-      onClose();
+      onClose(true);
     } catch (error) {
       console.error('Error updating order:', error);
       toast.error('Failed to update order');

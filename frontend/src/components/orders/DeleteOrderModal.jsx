@@ -12,7 +12,7 @@ const DeleteOrderModal = ({ isOpen, onClose, order }) => {
     setIsLoading(true);
     try {
       await deleteOrder(order._id);
-      onClose();
+      onClose(true);
     } catch (error) {
       console.error('Error deleting order:', error);
       alert('Failed to delete order. Please try again.');

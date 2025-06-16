@@ -1,11 +1,28 @@
 import { useState, useEffect } from 'react';
-import { X, ShoppingBag, Package, Calendar, User, Phone, MapPin, CreditCard } from 'lucide-react';
+import { X, ShoppingBag, Package, Calendar, User, Phone, MapPin, CreditCard, Clipboard, ArrowUpRight, MessageSquare, ZoomIn } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { orderApi } from '../../services/api';
 
 const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copyStatus, setCopyStatus] = useState('');
+  const [enlargedImage, setEnlargedImage] = useState(false);
+
+  const copyToClipboard = async (text, type) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyStatus(type);
+      setTimeout(() => setCopyStatus(''), 2000);
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+    }
+  };
+
+  const copyTrackingMessage = (trackingId) => {
+    const message = `Good afternoon!\nWe have shipped your order. You can track it using the consignment number - ${trackingId} on the India Post website.`;
+    copyToClipboard(message, 'message');
+  };
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -236,21 +253,63 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 								Tracking Information
 							</h3>
 							<div className='bg-gray-50 p-3 md:p-4 rounded-md'>
-								<div className='flex items-center space-x-2 mb-2'>
-									<Package size={16} className='text-indigo-600' />
-									<span className='text-sm md:text-base font-medium'>Tracking ID:</span>
-									<span className='text-sm md:text-base'>{orderData.trackingId}</span>
+								<div className='flex items-start flex-wrap gap-2'>
+									<div className='flex items-center space-x-2 mb-2 flex-grow'>
+										<Package size={16} className='text-indigo-600' />
+										<span className='text-sm md:text-base font-medium'>Tracking ID:</span>
+										<button 
+											onClick={() => copyToClipboard(orderData.trackingId, 'tracking')}
+											className='text-sm md:text-base cursor-pointer text-indigo-600 border-b border-dotted border-indigo-600 hover:text-indigo-800 focus:outline-none'
+										>
+											{orderData.trackingId}
+										</button>
+										{copyStatus === 'tracking' && (
+											<span className='text-xs text-green-600 ml-1'>Copied!</span>
+										)}
+									</div>
+									
+									<div className='flex flex-wrap gap-2'>
+										<a 
+											href="https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx"
+											target="_blank"
+											rel="noopener noreferrer"
+											className='flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs md:text-sm hover:bg-blue-200 transition-colors'
+										>
+											Track <ArrowUpRight size={14} className="ml-1" />
+										</a>
+										
+										<button 
+											onClick={() => copyTrackingMessage(orderData.trackingId)}
+											className='flex items-center cursor-pointer px-2 py-1 bg-green-100 text-green-800 rounded-md text-xs md:text-sm hover:bg-green-200 transition-colors'
+										>
+											DM <MessageSquare size={14} className="ml-1" />
+											{copyStatus === 'message' && (
+												<span className='ml-1'>✓</span>
+											)}
+										</button>
+									</div>
 								</div>
+								
 								{orderData.trackingImage && (
-									<div>
+									<div className="mt-3">
 										<span className='block text-xs md:text-sm text-gray-700 mb-2'>
 											Tracking Image:
 										</span>
-										<img
-											src={orderData.trackingImage}
-											alt='Tracking'
-											className='h-24 md:h-32 w-auto object-contain border rounded-md'
-										/>
+										<div className="relative group">
+											<div 
+												onClick={() => setEnlargedImage(true)} 
+												className="cursor-pointer relative"
+											>
+												<img
+													src={orderData.trackingImage}
+													alt='Tracking'
+													className='h-24 md:h-32 w-auto object-contain border rounded-md'
+												/>
+												<div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 flex items-center justify-center transition-all duration-200 rounded-md">
+													<ZoomIn className="text-white opacity-0 group-hover:opacity-100" />
+												</div>
+											</div>
+										</div>
 									</div>
 								)}
 							</div>
@@ -305,6 +364,26 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 					</button>
 				</div>
 			</div>
+			
+			{/* Enlarged Image Modal */}
+			{enlargedImage && orderData.trackingImage && (
+				<div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] p-4">
+					<div className="relative max-w-3xl w-full">
+						<button 
+							onClick={() => setEnlargedImage(false)}
+							className="absolute -top-10 right-0 text-white hover:text-gray-300 p-2"
+							aria-label="Close"
+						>
+							<X size={24} />
+						</button>
+						<img 
+							src={orderData.trackingImage} 
+							alt="Tracking Slip" 
+							className="max-w-full max-h-[80vh] object-contain mx-auto"
+						/>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

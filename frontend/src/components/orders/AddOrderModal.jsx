@@ -232,7 +232,7 @@ const AddOrderModal = ({ isOpen, onClose }) => {
       setSelectedBooks([]);
       setBookQuantities({});
       setSelectedCustomer(null);
-      onClose();
+      onClose(true);
       
     } catch (error) {
       console.error('Error creating order:', error);

@@ -58,7 +58,7 @@ const ShippingModal = ({ isOpen, onClose, order }) => {
       };
       
       await updateOrderShipping(order._id, orderData);
-      onClose();
+      onClose(true);
     } catch (error) {
       console.error('Error updating shipping details:', error);
       alert('Failed to update shipping details. Please try again.');
