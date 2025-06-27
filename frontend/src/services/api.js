@@ -1,6 +1,6 @@
 import axios from 'axios';
 // const API_URL = 'http://localhost:5002/api';
-const API_URL = "https://novelfindsbackend-production.up.railway.app/api";
+const API_URL = "https://novelfindsomsbackend2-production.up.railway.app/api";
 // const API_URL = "https://novelfindsbackend.onrender.com/api";
 
 // Book API calls
