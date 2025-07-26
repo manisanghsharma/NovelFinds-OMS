@@ -236,11 +236,18 @@ const Orders = () => {
       setDownloadingLabels(true);
       const blob = await orderApi.downloadAddressLabels();
       
+      // Generate today's date in DD/MM/YYYY format
+      const today = new Date();
+      const day = String(today.getDate()).padStart(2, '0');
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const year = today.getFullYear();
+      const dateString = `${day}-${month}-${year}`;
+      
       // Create a download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'address-labels.pdf';
+      link.download = `Address Labels ${dateString}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
