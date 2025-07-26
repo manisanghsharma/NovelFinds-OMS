@@ -104,6 +104,13 @@ export const orderApi = {
   getCustomerOrders: async (customerId) => {
     const response = await axios.get(`${API_URL}/orders/customer/${customerId}`);
     return response.data;
+  },
+  
+  downloadAddressLabels: async () => {
+    const response = await axios.get(`${API_URL}/orders/labels/download`, {
+      responseType: 'blob'
+    });
+    return response.data;
   }
 };
 

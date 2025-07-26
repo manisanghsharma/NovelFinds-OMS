@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Search, Filter, Pencil, Truck, Trash2, Eye, User, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Search, Filter, Pencil, Truck, Trash2, Eye, User, ChevronUp, ChevronDown, Download } from 'lucide-react';
 import AddOrderModal from '../components/orders/AddOrderModal';
 import ShippingModal from '../components/orders/ShippingModal';
 import EditOrderModal from '../components/orders/EditOrderModal';
 import DeleteOrderModal from '../components/orders/DeleteOrderModal';
 import ViewOrderModal from '../components/orders/ViewOrderModal';
+import { orderApi } from '../services/api';
 
 // Profile Image component that generates avatars based on customer name
 const ProfileImage = ({ name, size = 'small' }) => {
@@ -85,6 +86,7 @@ const Orders = () => {
     key: null,
     direction: null
   });
+  const [downloadingLabels, setDownloadingLabels] = useState(false);
   
   useEffect(() => {
     fetchOrders();
@@ -229,17 +231,68 @@ const Orders = () => {
     });
   };
   
+  const handleDownloadLabels = async () => {
+    try {
+      setDownloadingLabels(true);
+      const blob = await orderApi.downloadAddressLabels();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'address-labels.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      // Show success message
+      alert('Address labels downloaded successfully!');
+    } catch (error) {
+      console.error('Error downloading labels:', error);
+      if (error.response?.status === 404) {
+        alert('No pending orders found to generate labels for.');
+      } else {
+        alert('Error downloading address labels. Please try again.');
+      }
+    } finally {
+      setDownloadingLabels(false);
+    }
+  };
+  
+  // Count pending orders for the download button
+  const pendingOrdersCount = orders?.filter(order => order.status === 'Pending').length || 0;
+  
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-wrap gap-2 justify-between items-center">
         <h1 className="text-xl md:text-2xl font-bold text-gray-800">Order Management</h1>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-indigo-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded flex items-center space-x-1 md:space-x-2 hover:bg-indigo-700 transition-colors cursor-pointer text-sm md:text-base"
-        >
-          <Plus size={16} />
-          <span>New Order</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleDownloadLabels}
+            disabled={downloadingLabels || pendingOrdersCount === 0}
+            className={`px-3 py-1.5 md:px-4 md:py-2 rounded flex items-center space-x-1 md:space-x-2 transition-colors cursor-pointer text-sm md:text-base ${
+              pendingOrdersCount === 0 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-green-600 text-white hover:bg-green-700'
+            }`}
+            title={pendingOrdersCount === 0 ? 'No pending orders to download' : 'Download address labels for pending orders'}
+          >
+            {downloadingLabels ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
+              <Download size={16} />
+            )}
+            <span>Download Labels ({pendingOrdersCount})</span>
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-indigo-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded flex items-center space-x-1 md:space-x-2 hover:bg-indigo-700 transition-colors cursor-pointer text-sm md:text-base"
+          >
+            <Plus size={16} />
+            <span>New Order</span>
+          </button>
+        </div>
       </div>
       
       {/* Search and Filter */}
