@@ -154,7 +154,7 @@ const Inventory = () => {
     setShowViewModal(true);
   };
   
-  const handleModalClose = () => {
+  const handleModalClose = (shouldReload = false) => {
     setShowAddModal(false);
     setShowEditModal(false);
     setShowDeleteModal(false);
@@ -162,7 +162,7 @@ const Inventory = () => {
     setShowCalculatorModal(false);
     setShowBatchModal(false);
     setSelectedBook(null);
-    fetchBooks(); // Refresh the books list
+    if (shouldReload) fetchBooks();
   };
   
   return (
@@ -415,12 +415,12 @@ const Inventory = () => {
       </div>
       
       {/* Modals */}
-      <AddBookModal isOpen={showAddModal} onClose={handleModalClose} />
-      <EditBookModal isOpen={showEditModal} onClose={handleModalClose} book={selectedBook} />
-      <DeleteConfirmModal isOpen={showDeleteModal} onClose={handleModalClose} book={selectedBook} />
-      <PriceCalculatorModal isOpen={showCalculatorModal} onClose={handleModalClose} />
-      <AddBatchBooksModal isOpen={showBatchModal} onClose={handleModalClose} />
-      {selectedBook && <ViewBookModal isOpen={showViewModal} onClose={handleModalClose} book={selectedBook} />}
+      <AddBookModal isOpen={showAddModal} onClose={(shouldReload) => handleModalClose(shouldReload)} />
+      <EditBookModal isOpen={showEditModal} onClose={(shouldReload) => handleModalClose(shouldReload)} book={selectedBook} />
+      <DeleteConfirmModal isOpen={showDeleteModal} onClose={(shouldReload) => handleModalClose(shouldReload)} book={selectedBook} />
+      <PriceCalculatorModal isOpen={showCalculatorModal} onClose={() => handleModalClose(false)} />
+      <AddBatchBooksModal isOpen={showBatchModal} onClose={(shouldReload) => handleModalClose(shouldReload)} />
+      {selectedBook && <ViewBookModal isOpen={showViewModal} onClose={() => handleModalClose(false)} book={selectedBook} />}
     </div>
   );
 };

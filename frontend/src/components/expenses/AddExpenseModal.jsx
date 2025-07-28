@@ -38,7 +38,7 @@ const AddExpenseModal = ({ isOpen, onClose, onSubmit, expenseCategories, payment
             {editingExpense ? "Edit Expense" : "Add New Expense"}
           </h2>
           <button
-            onClick={onClose}
+            onClick={() => onClose()}
             className='text-gray-400 hover:text-gray-600 cursor-pointer p-1'
           >
             <X size={20} />
@@ -143,7 +143,7 @@ const AddExpenseModal = ({ isOpen, onClose, onSubmit, expenseCategories, payment
           <div className='flex justify-end space-x-2 md:space-x-3 mt-4 md:mt-6'>
             <button
               type='button'
-              onClick={onClose}
+              onClick={() => onClose()}
               disabled={isLoading}
               className='px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm cursor-pointer border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             >

@@ -164,7 +164,7 @@ const AddBookModal = ({ isOpen, onClose }) => {
       await createBook(data);
       toast.success('Book added successfully');
       reset();
-      onClose();
+      onClose(true);
     } catch (error) {
       console.error('Error adding book:', error);
       toast.error('Failed to add book');
@@ -183,7 +183,7 @@ const AddBookModal = ({ isOpen, onClose }) => {
           <button
             onClick={() => {
               stopScan();
-              onClose();
+              onClose(false);
             }}
             className="text-gray-400 hover:text-gray-600 cursor-pointer p-1"
           >
@@ -420,7 +420,7 @@ const AddBookModal = ({ isOpen, onClose }) => {
           <div className="flex justify-end space-x-2 md:space-x-3 pt-3 md:pt-4 border-t">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => onClose(false)}
               className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
             >
               Cancel

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
 // const API_URL = 'http://localhost:5002/api';
 const API_URL = "https://novelfindsomsbackend2-production.up.railway.app/api";
 // const API_URL = "https://novelfindsbackend.onrender.com/api";
@@ -215,5 +216,18 @@ export const uploadApi = {
     });
     
     return response.data;
+  },
+  // New method to upload to imgbb
+  uploadToImgbb: async (file) => {
+    const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await axios.post(`https://api.imgbb.com/1/upload?key=${apiKey}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    // imgbb returns the image URL in response.data.data.url
+    return response.data.data.url;
   }
 }; 

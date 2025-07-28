@@ -40,7 +40,7 @@ const DeleteOrderModal = ({ isOpen, onClose, order }) => {
         <div className="flex justify-between items-center border-b px-4 py-3 md:px-6 md:py-4 sticky top-0 bg-white z-10">
           <h2 className="text-lg md:text-xl font-semibold text-gray-800">Confirm Deletion</h2>
           <button
-            onClick={onClose}
+            onClick={() => onClose()}
             className="text-gray-400 hover:text-gray-600 cursor-pointer p-1"
           >
             <X size={18} />
@@ -55,7 +55,7 @@ const DeleteOrderModal = ({ isOpen, onClose, order }) => {
           <div className="flex justify-end space-x-2 md:space-x-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => onClose()}
               className="px-3 py-1.5 md:px-4 md:py-2 border border-gray-300 rounded-md text-sm md:text-base text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
             >
               Cancel

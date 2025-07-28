@@ -232,7 +232,7 @@ const AddOrderModal = ({ isOpen, onClose }) => {
       setSelectedBooks([]);
       setBookQuantities({});
       setSelectedCustomer(null);
-      onClose(true);
+      onClose();
       
     } catch (error) {
       console.error('Error creating order:', error);
@@ -252,7 +252,7 @@ const AddOrderModal = ({ isOpen, onClose }) => {
 						Create New Order
 					</h2>
 					<button
-						onClick={onClose}
+						onClick={() => onClose()}
 						className='text-gray-400 hover:text-gray-600 cursor-pointer p-1'
 					>
 						<X size={18} />

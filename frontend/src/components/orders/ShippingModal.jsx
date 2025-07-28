@@ -36,13 +36,11 @@ const ShippingModal = ({ isOpen, onClose, order }) => {
       if (uploadFile) {
         setUploadLoading(true);
         try {
-          // Upload the image to Google Drive with the tracking ID
-          const uploadResult = await uploadApi.uploadToGoogleDrive(uploadFile, data.trackingId);
-          
-          // Use the direct content URL for image display
-          trackingImageUrl = uploadResult.webContentLink;
+          // Upload the image to imgbb
+          const imgbbUrl = await uploadApi.uploadToImgbb(uploadFile);
+          trackingImageUrl = imgbbUrl;
         } catch (uploadError) {
-          console.error('Error uploading image to Google Drive:', uploadError);
+          console.error('Error uploading image to imgbb:', uploadError);
           alert('Failed to upload tracking image. Please try again.');
           setIsLoading(false);
           setUploadLoading(false);
@@ -92,7 +90,7 @@ const ShippingModal = ({ isOpen, onClose, order }) => {
 						Update Shipping Details
 					</h2>
 					<button
-						onClick={onClose}
+						onClick={() => onClose()}
 						className='text-gray-400 hover:text-gray-600 cursor-pointer p-1'
 					>
 						<X size={18} />
@@ -160,8 +158,7 @@ const ShippingModal = ({ isOpen, onClose, order }) => {
 								className='w-full focus:outline-none text-xs md:text-sm'
 							/>
 							<div className='text-xs text-gray-500 mt-1'>
-								Image will be uploaded to Google Drive (Shipping Receipts
-								folder)
+								Image will be uploaded to imgbb.com
 							</div>
 						</div>
 
@@ -179,7 +176,7 @@ const ShippingModal = ({ isOpen, onClose, order }) => {
 					<div className='flex justify-end space-x-2 md:space-x-3 pt-3 md:pt-4 border-t'>
 						<button
 							type='button'
-							onClick={onClose}
+							onClick={() => onClose()}
 							className='px-3 py-1.5 md:px-4 md:py-2 border border-gray-300 rounded-md text-sm md:text-base text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer'
 							disabled={isLoading || uploadLoading}
 						>

@@ -108,7 +108,7 @@ const CustomerDetailsModal = ({ isOpen, onClose, customer }) => {
         <div className="flex justify-between items-center border-b px-4 py-3 md:px-6 md:py-4 sticky top-0 bg-white z-10">
           <h2 className="text-lg md:text-xl font-semibold text-gray-800">Customer Details</h2>
           <button
-            onClick={onClose}
+            onClick={() => onClose()}
             className="text-gray-400 hover:text-gray-600 cursor-pointer p-1"
           >
             <X size={20} />
@@ -267,7 +267,7 @@ const CustomerDetailsModal = ({ isOpen, onClose, customer }) => {
         
         <div className="border-t px-4 py-3 md:px-6 md:py-4 flex justify-end">
           <button
-            onClick={onClose}
+            onClick={() => onClose()}
             className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors cursor-pointer"
           >
             Close

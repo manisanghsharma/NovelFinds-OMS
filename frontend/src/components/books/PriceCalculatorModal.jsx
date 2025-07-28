@@ -159,7 +159,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
             Price Calculator
           </h2>
           <button
-            onClick={onClose}
+            onClick={() => onClose()}
             className='text-gray-400 hover:text-gray-600 cursor-pointer'
           >
             <X size={18} />
@@ -387,7 +387,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
             
             <button
               type='button'
-              onClick={onClose}
+              onClick={() => onClose()}
               className='px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors cursor-pointer'
             >
               Close

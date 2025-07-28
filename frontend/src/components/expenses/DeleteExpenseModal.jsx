@@ -11,7 +11,7 @@ const DeleteExpenseModal = ({ isOpen, onClose, expense, onDelete }) => {
 						Confirm Deletion
 					</h2>
 					<button
-						onClick={onClose}
+						onClick={() => onClose()}
 						className='text-gray-400 hover:text-gray-600 cursor-pointer p-1'
 					>
 						<X size={20} />
@@ -36,7 +36,7 @@ const DeleteExpenseModal = ({ isOpen, onClose, expense, onDelete }) => {
 
 					<div className='flex justify-end space-x-2 md:space-x-3 mt-4 md:mt-6'>
 						<button
-							onClick={onClose}
+							onClick={() => onClose()}
 							className='px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm cursor-pointer border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors'
 						>
 							Cancel

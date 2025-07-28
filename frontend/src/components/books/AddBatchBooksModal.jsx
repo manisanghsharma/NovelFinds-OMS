@@ -99,7 +99,7 @@ const AddBatchBooksModal = ({ isOpen, onClose }) => {
       toast.success(`${preview.length} books added successfully`);
       setBatchText('');
       setPreview([]);
-      onClose();
+      onClose(true);
     } catch (error) {
       console.error('Error adding batch books:', error);
       toast.error('Failed to add batch books');
@@ -112,7 +112,7 @@ const AddBatchBooksModal = ({ isOpen, onClose }) => {
   const handleCancel = () => {
     setPreview([]);
     setError('');
-    onClose();
+    onClose(false);
   };
   
   if (!isOpen) return null;

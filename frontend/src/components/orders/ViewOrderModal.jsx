@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, ShoppingBag, Package, Calendar, User, Phone, MapPin, CreditCard, Clipboard, ArrowUpRight, MessageSquare, ZoomIn } from 'lucide-react';
+import { X, ShoppingBag, Package, Calendar, User, Phone, MapPin, CreditCard, Clipboard, ArrowUpRight, MessageSquare, ZoomIn, Image as ImageIcon } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { orderApi } from '../../services/api';
 
@@ -75,7 +75,7 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 				<div className='flex justify-between items-center border-b px-4 py-3 md:px-6 md:py-4 sticky top-0 bg-white z-10'>
 					<h2 className='text-lg md:text-xl font-semibold text-gray-800'>Order Details</h2>
 					<button
-						onClick={onClose}
+						onClick={() => onClose()}
 						className='text-gray-400 hover:text-gray-600 cursor-pointer p-1'
 					>
 						<X size={18} />
@@ -267,7 +267,6 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 											<span className='text-xs text-green-600 ml-1'>Copied!</span>
 										)}
 									</div>
-									
 									<div className='flex flex-wrap gap-2'>
 										<a 
 											href="https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx"
@@ -277,7 +276,16 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 										>
 											Track <ArrowUpRight size={14} className="ml-1" />
 										</a>
-										
+										{orderData.trackingImage && (
+											<button
+												onClick={() => setEnlargedImage(true)}
+												className='flex items-center cursor-pointer px-2 py-1 bg-purple-100 text-purple-800 rounded-md text-xs md:text-sm hover:bg-purple-200 transition-colors'
+												title='View Shipping Image'
+											>
+												<ImageIcon size={14} className="mr-1" />
+												Image
+											</button>
+										)}
 										<button 
 											onClick={() => copyTrackingMessage(orderData.trackingId)}
 											className='flex items-center cursor-pointer px-2 py-1 bg-green-100 text-green-800 rounded-md text-xs md:text-sm hover:bg-green-200 transition-colors'
@@ -291,26 +299,7 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 								</div>
 								
 								{orderData.trackingImage && (
-									<div className="mt-3">
-										<span className='block text-xs md:text-sm text-gray-700 mb-2'>
-											Tracking Image:
-										</span>
-										<div className="relative group">
-											<div 
-												onClick={() => setEnlargedImage(true)} 
-												className="cursor-pointer relative"
-											>
-												<img
-													src={orderData.trackingImage}
-													alt='Tracking'
-													className='h-24 md:h-32 w-auto object-contain border rounded-md'
-												/>
-												<div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 flex items-center justify-center transition-all duration-200 rounded-md">
-													<ZoomIn className="text-white opacity-0 group-hover:opacity-100" />
-												</div>
-											</div>
-										</div>
-									</div>
+									null
 								)}
 							</div>
 						</div>
@@ -357,7 +346,7 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 
 				<div className='border-t px-4 py-3 md:px-6 md:py-4 flex justify-end'>
 					<button
-						onClick={onClose}
+						onClick={() => onClose()}
 						className='px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors cursor-pointer'
 					>
 						Close

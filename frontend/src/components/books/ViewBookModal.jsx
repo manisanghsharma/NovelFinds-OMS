@@ -49,7 +49,7 @@ const ViewBookModal = ({ isOpen, onClose, book: initialBook }) => {
         <div className="flex justify-between items-center border-b px-4 py-3 md:px-6 md:py-4 bg-gradient-to-r from-indigo-50 to-white sticky top-0 z-10">
           <h2 className="text-lg md:text-xl font-semibold text-gray-800">Book Details</h2>
           <button
-            onClick={onClose}
+            onClick={() => onClose()}
             className="text-gray-400 hover:text-gray-600 cursor-pointer p-1"
           >
             <X size={18} />
@@ -216,7 +216,7 @@ const ViewBookModal = ({ isOpen, onClose, book: initialBook }) => {
         
         <div className="border-t px-4 py-3 md:px-6 md:py-4 flex justify-end bg-gray-50">
           <button
-            onClick={onClose}
+            onClick={() => onClose()}
             className="px-4 py-1.5 md:px-6 md:py-2 text-sm md:text-base bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors cursor-pointer font-medium shadow-sm"
           >
             Close
