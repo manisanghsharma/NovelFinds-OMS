@@ -19,8 +19,10 @@ const AddBatchBooksModal = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   // Example format for the text area
-  const exampleFormat = `{ "title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "format": "hardcover", "purchaseCost": 200, "sellingPrice": 300, "weight": 0.5, "condition": "Good", "purchaseDate": "2023-06-15" }
-{ "title": "To Kill a Mockingbird", "author": "Harper Lee", "format": "paperback", "purchaseCost": 80, "sellingPrice": 150, "weight": 0.3, "condition": "Very Good" }`;
+  const exampleFormat = `[
+  { "title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "format": "hardcover", "purchaseCost": 200, "sellingPrice": 300, "weight": 0.5, "condition": "Good", "purchaseDate": "2023-06-15" },
+  { "title": "To Kill a Mockingbird", "author": "Harper Lee", "format": "paperback", "purchaseCost": 80, "sellingPrice": 150, "weight": 0.3, "condition": "Very Good" }
+]`;
 
   const parseEntry = (entry) => {
     try {
@@ -31,8 +33,8 @@ const AddBatchBooksModal = ({ isOpen, onClose }) => {
         condition: 'Good',
       };
       
-      // Parse JSON object
-      const parsedBook = JSON.parse(entry);
+      // If entry is already an object, use it directly
+      const parsedBook = typeof entry === 'string' ? JSON.parse(entry) : entry;
       
       // Merge with default values
       return { ...defaultBook, ...parsedBook };
@@ -58,16 +60,23 @@ const AddBatchBooksModal = ({ isOpen, onClose }) => {
       setError('Please enter book data');
       return;
     }
-    
-    const entries = batchText.split('\n').filter(entry => entry.trim());
+    let booksArray;
+    try {
+      booksArray = JSON.parse(batchText);
+      if (!Array.isArray(booksArray)) {
+        setError('Input must be a JSON array of book objects.');
+        return;
+      }
+    } catch (error) {
+      setError(`Invalid JSON format: ${error.message}`);
+      return;
+    }
     const parsedBooks = [];
     const errors = [];
-    
-    entries.forEach((entry, index) => {
+    booksArray.forEach((entry, index) => {
       try {
         const book = parseEntry(entry);
         const validationError = validateBook(book);
-        
         if (validationError) {
           errors.push(`Entry ${index + 1}: ${validationError}`);
         } else {
@@ -77,7 +86,6 @@ const AddBatchBooksModal = ({ isOpen, onClose }) => {
         errors.push(`Entry ${index + 1}: ${error.message}`);
       }
     });
-    
     if (errors.length > 0) {
       setError(errors.join('\n'));
     } else {
@@ -133,11 +141,14 @@ const AddBatchBooksModal = ({ isOpen, onClose }) => {
         <div className="p-4 md:p-6 space-y-4">
           <div>
             <label className="block text-gray-700 text-sm md:text-base font-medium mb-2">
-              Enter Book Data (One JSON object per line)
+              Enter Book Data (Paste a JSON array of book objects)
             </label>
             <div className="mb-2 p-2 bg-gray-50 rounded text-xs md:text-sm text-gray-600 border border-gray-200">
-              <p className="font-medium mb-1">Format each line as a JSON object:</p>
-              <p className="mb-1 font-mono overflow-x-auto whitespace-nowrap">&#123; "title": "Book Title", "author": "Author Name", "purchaseCost": 200, "sellingPrice": 300, "weight": 0.5 &#125;</p>
+              <p className="font-medium mb-1">Paste a JSON array of book objects:</p>
+              <pre className="mb-1 font-mono overflow-x-auto whitespace-pre">[
+  &#123; "title": "Book Title", "author": "Author Name", "purchaseCost": 200, "sellingPrice": 300, "weight": 0.5 &#125;,
+  &#123; "title": "Another Book", "purchaseCost": 100, "sellingPrice": 150, "weight": 0.4 &#125;
+]</pre>
               <p className="text-xs text-gray-500">Required fields: title, purchaseCost, sellingPrice, weight</p>
               <p className="text-xs text-gray-500 mt-1">Optional fields: purchaseDate (defaults to today), author, isbn, genre, format, condition, notes</p>
               <p className="text-xs text-gray-500 mt-1">Date format: "YYYY-MM-DD" (e.g., "2023-07-15")</p>
@@ -145,8 +156,11 @@ const AddBatchBooksModal = ({ isOpen, onClose }) => {
             <textarea
               value={batchText}
               onChange={(e) => setBatchText(e.target.value)}
-              placeholder={exampleFormat}
-              rows="6"
+              placeholder={`[
+  { "title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "format": "hardcover", "purchaseCost": 200, "sellingPrice": 300, "weight": 0.5, "condition": "Good", "purchaseDate": "2023-06-15" },
+  { "title": "To Kill a Mockingbird", "author": "Harper Lee", "format": "paperback", "purchaseCost": 80, "sellingPrice": 150, "weight": 0.3, "condition": "Very Good" }
+] // Paste a JSON array of book objects as shown`}
+              rows="8"
               className="w-full border border-gray-300 rounded-md p-2 text-sm md:text-base font-mono focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             ></textarea>
             {error && (
