@@ -283,7 +283,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                         </tr>
                       </thead>
                       <tbody className='divide-y' style={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb' }}>
-                        {selectedBooks.map((book) => (
+                        {[...selectedBooks].sort((a, b) => (a.sellingPrice || 0) - (b.sellingPrice || 0)).map((book) => (
                           <tr key={book._id}>
                             <td className='px-2 md:px-4 py-2 md:py-3 whitespace-nowrap'>
                               <div className='flex items-start space-x-2'>
