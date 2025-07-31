@@ -14,6 +14,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
   const [isGeneratingFile, setIsGeneratingFile] = useState(false);
   const [error, setError] = useState(null);
   const [bookSearchTerm, setBookSearchTerm] = useState('');
+  const [editingCell, setEditingCell] = useState(null); // { bookId, field }
   
   // Refs to capture for image
   const contentRef = useRef(null);
@@ -135,6 +136,15 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
     } finally {
       setIsGeneratingFile(false);
     }
+  };
+  
+  // Helper to update a book's field in selectedBooks
+  const updateBookField = (bookId, field, value) => {
+    setSelectedBooks((prev) =>
+      prev.map((book) =>
+        book._id === bookId ? { ...book, [field]: value } : book
+      )
+    );
   };
   
   // Alphabetically sorted and filtered books
@@ -292,11 +302,53 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                                 </div>
                               </div>
                             </td>
-                            <td className='px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right' style={{ color: '#111827' }}>
-                              ₹{book.sellingPrice || 0}
+                            {/* Editable Price Cell */}
+                            <td
+                              className='px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right'
+                              style={{ color: '#111827', cursor: 'pointer' }}
+                              onDoubleClick={() => setEditingCell({ bookId: book._id, field: 'sellingPrice' })}
+                            >
+                              {editingCell && editingCell.bookId === book._id && editingCell.field === 'sellingPrice' ? (
+                                <input
+                                  type="number"
+                                  autoFocus
+                                  min="0"
+                                  step="1"
+                                  value={book.sellingPrice || 0}
+                                  onChange={e => updateBookField(book._id, 'sellingPrice', Number(e.target.value))}
+                                  onBlur={() => setEditingCell(null)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') setEditingCell(null);
+                                  }}
+                                  className="w-20 text-right border border-gray-300 rounded px-1 py-0.5 text-xs md:text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                              ) : (
+                                `₹${book.sellingPrice || 0}`
+                              )}
                             </td>
-                            <td className='px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right' style={{ color: '#6b7280' }}>
-                              {book.weight} kg
+                            {/* Editable Weight Cell */}
+                            <td
+                              className='px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-right'
+                              style={{ color: '#6b7280', cursor: 'pointer' }}
+                              onDoubleClick={() => setEditingCell({ bookId: book._id, field: 'weight' })}
+                            >
+                              {editingCell && editingCell.bookId === book._id && editingCell.field === 'weight' ? (
+                                <input
+                                  type="number"
+                                  autoFocus
+                                  min="0"
+                                  step="0.01"
+                                  value={book.weight}
+                                  onChange={e => updateBookField(book._id, 'weight', Number(e.target.value))}
+                                  onBlur={() => setEditingCell(null)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') setEditingCell(null);
+                                  }}
+                                  className="w-16 text-right border border-gray-300 rounded px-1 py-0.5 text-xs md:text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                              ) : (
+                                `${book.weight} kg`
+                              )}
                             </td>
                           </tr>
                         ))}

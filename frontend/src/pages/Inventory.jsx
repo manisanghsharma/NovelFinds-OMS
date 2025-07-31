@@ -165,6 +165,12 @@ const Inventory = () => {
     if (shouldReload) fetchBooks();
   };
   
+  // Helper function to truncate title
+  const truncateTitle = (title, maxLength = 25) => {
+    if (!title) return '';
+    return title.length > maxLength ? title.slice(0, maxLength) + '...' : title;
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 md:gap-4">
@@ -252,7 +258,13 @@ const Inventory = () => {
                 onClick={() => handleViewClick(book)}
               >
                 <div className="mb-1">
-                  <div className="text-sm font-medium text-gray-900">{book.title}</div>
+                  <div
+                    className="text-sm font-medium text-gray-900 hover:underline cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); handleViewClick(book); }}
+                    title={book.title}
+                  >
+                    {truncateTitle(book.title)}
+                  </div>
                   <div className="text-xs text-gray-500">{book.author || 'Unknown author'}</div>
                 </div>
                 
@@ -367,7 +379,15 @@ const Inventory = () => {
                     className="hover:bg-gray-50 cursor-pointer"
                     onClick={() => handleViewClick(book)}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{book.title}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <span
+                        className="hover:underline cursor-pointer"
+                        onClick={(e) => { e.stopPropagation(); handleViewClick(book); }}
+                        title={book.title}
+                      >
+                        {truncateTitle(book.title)}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">{book.author || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                       {new Date(book.purchaseDate).toLocaleDateString()}
