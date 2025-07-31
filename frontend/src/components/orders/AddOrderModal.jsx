@@ -517,7 +517,7 @@ const AddOrderModal = ({ isOpen, onClose }) => {
 													</tr>
 												</thead>
 												<tbody className='bg-white divide-y divide-gray-200'>
-													{selectedBooks.map((book) => (
+													{[...selectedBooks].sort((a, b) => (parseFloat(a.purchaseCost) || 0) - (parseFloat(b.purchaseCost) || 0)).map((book) => (
 														<tr key={book._id}>
 															<td className='px-3 py-2 md:px-4 md:py-3 whitespace-nowrap'>
 																<div className='flex items-start space-x-2'>
