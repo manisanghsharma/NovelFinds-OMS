@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Calculator, ShoppingBag, Download } from 'lucide-react';
+import { X, Calculator, ShoppingBag, Download, Percent, DollarSign } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 
 const PriceCalculatorModal = ({ isOpen, onClose }) => {
   const { availableBooks, fetchAvailableBooks } = useAppContext();
@@ -11,6 +11,10 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
   const [totalBookPrice, setTotalBookPrice] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [totalWeight, setTotalWeight] = useState(0);
+  const [discountType, setDiscountType] = useState('percentage'); // 'percentage' or 'flat'
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [discountFlat, setDiscountFlat] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(0);
   const [isGeneratingFile, setIsGeneratingFile] = useState(false);
   const [error, setError] = useState(null);
   const [bookSearchTerm, setBookSearchTerm] = useState('');
@@ -25,6 +29,8 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
       fetchAvailableBooks();
       setSelectedBooks([]);
       setError(null);
+      setDiscountPercentage(0);
+      setDiscountFlat(0);
     }
   }, [isOpen, fetchAvailableBooks]);
   
@@ -35,6 +41,7 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
       setTotalWeight(0);
       setTotalBookPrice(0);
       setTotalPrice(0);
+      setDiscountAmount(0);
       return;
     }
     
@@ -59,9 +66,21 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
     const calculatedShippingCost = calculateShippingCost(weightSum);
     setShippingCost(calculatedShippingCost);
     
-    // Calculate total price
-    setTotalPrice(bookPriceSum + calculatedShippingCost);
-  }, [selectedBooks]);
+    // Calculate subtotal before discount
+    const subtotal = bookPriceSum + calculatedShippingCost;
+    
+    // Calculate discount amount based on type
+    let calculatedDiscountAmount = 0;
+    if (discountType === 'percentage') {
+      calculatedDiscountAmount = (subtotal * discountPercentage) / 100;
+    } else {
+      calculatedDiscountAmount = Math.min(discountFlat, subtotal); // Don't discount more than subtotal
+    }
+    setDiscountAmount(calculatedDiscountAmount);
+    
+    // Calculate final total price after discount
+    setTotalPrice(subtotal - calculatedDiscountAmount);
+  }, [selectedBooks, discountType, discountPercentage, discountFlat]);
   
   // Handle book selection
   const handleBookSelect = (book) => {
@@ -76,6 +95,8 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
   const handleClear = () => {
     setSelectedBooks([]);
     setError(null);
+    setDiscountPercentage(0);
+    setDiscountFlat(0);
   };
 
   // Generate canvas for image
@@ -95,6 +116,12 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
         // Find and remove the headings marked for removal
         const elementsToRemove = clonedElement.querySelectorAll('.pdf-remove-heading');
         elementsToRemove.forEach(el => el.remove());
+        
+        // Hide discount inputs when generating image
+        const discountInputs = clonedElement.querySelectorAll('.discount-input');
+        discountInputs.forEach(el => {
+          el.style.display = 'none';
+        });
         
         // Find all elements with text-indigo-600 class and replace with inline style
         clonedElement.querySelectorAll(".text-indigo-600").forEach((el) => {
@@ -371,6 +398,81 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                   </div>
                 </div>
 
+                {/* Discount Section */}
+                <div className='bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg p-4 discount-input'>
+                  <h4 className='text-sm md:text-base font-medium text-gray-800 mb-3 flex items-center'>
+                    <Calculator size={16} className='mr-2 text-indigo-600' />
+                    Apply Discount
+                  </h4>
+                  
+                  {/* Discount Type Toggle */}
+                  <div className='flex items-center space-x-4 mb-3'>
+                    <label className='flex items-center space-x-2 cursor-pointer'>
+                      <input
+                        type="radio"
+                        name="discountType"
+                        value="percentage"
+                        checked={discountType === 'percentage'}
+                        onChange={(e) => setDiscountType(e.target.value)}
+                        className='h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300'
+                      />
+                      <Percent size={14} className='text-gray-600' />
+                      <span className='text-xs md:text-sm text-gray-700'>Percentage</span>
+                    </label>
+                    
+                    <label className='flex items-center space-x-2 cursor-pointer'>
+                      <input
+                        type="radio"
+                        name="discountType"
+                        value="flat"
+                        checked={discountType === 'flat'}
+                        onChange={(e) => setDiscountType(e.target.value)}
+                        className='h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300'
+                      />
+                      <DollarSign size={14} className='text-gray-600' />
+                      <span className='text-xs md:text-sm text-gray-700'>Flat Amount</span>
+                    </label>
+                  </div>
+                  
+                  {/* Discount Input */}
+                  <div className='flex items-center space-x-3'>
+                    {discountType === 'percentage' ? (
+                      <>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          value={discountPercentage}
+                          onChange={(e) => setDiscountPercentage(Number(e.target.value))}
+                          className="w-24 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          placeholder="0"
+                        />
+                        <span className='text-sm text-gray-600'>%</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className='text-sm text-gray-600'>₹</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={discountFlat}
+                          onChange={(e) => setDiscountFlat(Number(e.target.value))}
+                          className="w-24 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          placeholder="0"
+                        />
+                      </>
+                    )}
+                    
+                    {discountAmount > 0 && (
+                      <span className='text-sm text-green-600 font-medium'>
+                        (₹{discountAmount.toFixed(2)} off)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
                 {/* Price Summary */}
                 <div style={{ backgroundColor: '#f9fafb', padding: '0.75rem', borderRadius: '0.375rem', marginTop: '1rem' }}>
                   <h3 style={{ fontSize: '1rem', fontWeight: '500', color: '#1f2937', marginBottom: '0.5rem' }}>
@@ -385,6 +487,20 @@ const PriceCalculatorModal = ({ isOpen, onClose }) => {
                       <span style={{ color: '#374151' }}>Shipping Cost:</span>
                       <span style={{ color: '#374151' }}>₹{shippingCost.toFixed(2)}</span>
                     </div>
+                    {discountAmount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#374151' }}>Subtotal:</span>
+                        <span style={{ color: '#374151' }}>₹{(totalBookPrice + shippingCost).toFixed(2)}</span>
+                      </div>
+                    )}
+                    {discountAmount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#10b981' }}>
+                          Discount {discountType === 'percentage' ? `(${discountPercentage}%)` : '(Flat)'}:
+                        </span>
+                        <span style={{ color: '#10b981' }}>-₹{discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div style={{ 
                       display: 'flex', 
                       justifyContent: 'space-between', 
