@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Search, User, ShoppingBag, Pencil, Trash2, Phone, MapPin, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, User, ShoppingBag, Pencil, Trash2, Phone, MapPin, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import CustomerDetailsModal from '../components/customers/CustomerDetailsModal';
 import EditCustomerModal from '../components/customers/EditCustomerModal';
 import DeleteCustomerModal from '../components/customers/DeleteCustomerModal';
@@ -67,98 +67,78 @@ const ProfileImage = ({ name, size = 'small' }) => {
   );
 };
 
+// Helper function to get default address
+const getDefaultAddress = (customer) => {
+  if (customer.addresses && customer.addresses.length > 0) {
+    const defaultAddress = customer.addresses.find(addr => addr.isDefault);
+    return defaultAddress?.address || customer.addresses[0].address;
+  }
+  return customer.address || 'No address available';
+};
+
 const Customers = () => {
-  const { customers, loadingCustomers, fetchCustomers } = useAppContext();
+  const { customers, customersPagination, loadingCustomers, fetchCustomers } = useAppContext();
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredCustomers, setFilteredCustomers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortDirection, setSortDirection] = useState('desc');
+  const [isChangingPage, setIsChangingPage] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [sortConfig, setSortConfig] = useState({
-    key: null,
-    direction: null
-  });
+  
+  // Debounce search term
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
   useEffect(() => {
-    fetchCustomers();
-  }, [fetchCustomers]);
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
   
   useEffect(() => {
-    // Filter customers based on search term
-    if (!customers) return;
+    // Reset to first page when search changes
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
+  
+  useEffect(() => {
+    // Fetch customers with current filters and pagination
+    const fetchCustomersWithPagination = async () => {
+      setIsChangingPage(true);
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+        sortField,
+        sortDirection
+      };
+      
+      if (debouncedSearchTerm) {
+        params.search = debouncedSearchTerm;
+      }
+      
+      await fetchCustomers(params);
+      setIsChangingPage(false);
+    };
     
-    let filtered = [...customers];
-    
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        customer => 
-          customer.name.toLowerCase().includes(term) ||
-          customer.socialHandle.toLowerCase().includes(term) ||
-          customer.phoneNumber.includes(term)
-      );
-    }
-    
-    // Apply sorting if configured
-    if (sortConfig.key && sortConfig.direction) {
-      filtered.sort((a, b) => {
-        let aValue = a[sortConfig.key];
-        let bValue = b[sortConfig.key];
-        
-        // Special handling for order counts
-        if (sortConfig.key === 'orderCount') {
-          aValue = a.orders?.length || 0;
-          bValue = b.orders?.length || 0;
-        }
-        
-        // Handle nulls/undefined values
-        if (aValue === undefined || aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (bValue === undefined || bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
-        
-        // For strings, do case-insensitive comparison
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          aValue = aValue.toLowerCase();
-          bValue = bValue.toLowerCase();
-        }
-        
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    
-    setFilteredCustomers(filtered);
-  }, [customers, searchTerm, sortConfig]);
+    fetchCustomersWithPagination();
+  }, [fetchCustomers, currentPage, itemsPerPage, sortField, sortDirection, debouncedSearchTerm]);
   
   const handleSort = (key) => {
-    setSortConfig(current => {
-      // If not sorting by this field yet, sort ascending
-      if (current.key !== key) {
-        return { key, direction: 'asc' };
-      }
-      
-      // If already sorting ascending by this field, toggle to descending
-      if (current.direction === 'asc') {
-        return { key, direction: 'desc' };
-      }
-      
-      // If already sorting descending, clear sorting (return to default)
-      return { key: null, direction: null };
-    });
+    setSortField(key);
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
   };
 
   const getSortIcon = (key) => {
-    if (sortConfig.key !== key) {
+    if (sortField !== key) {
       return null;
     }
     
-    return sortConfig.direction === 'asc' 
+    return sortDirection === 'asc' 
       ? <ChevronUp size={14} className="ml-1" /> 
       : <ChevronDown size={14} className="ml-1" />;
   };
@@ -185,10 +165,8 @@ const Customers = () => {
     setShowEditModal(false);
     setShowDeleteModal(false);
     setSelectedCustomer(null);
-    setSortConfig({
-      key: null,
-      direction: null
-    });
+    setSortField('createdAt'); // Reset sort field
+    setSortDirection('desc'); // Reset sort direction
     
     if (refresh) {
       fetchCustomers(); // Refresh the customers list if data changed
@@ -203,29 +181,59 @@ const Customers = () => {
       
       {/* Search */}
       <div className="bg-white p-3 md:p-4 rounded-lg shadow-sm">
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search size={16} className="text-gray-400" />
+        <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
+          <div className="flex-1 relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search size={16} className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by name, social handle or phone"
+              className="block w-full pl-9 pr-3 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            />
           </div>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, social handle or phone"
-            className="block w-full pl-9 pr-3 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          />
+          
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-500">Show:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(parseInt(e.target.value));
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+              className="border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setSortField('createdAt');
+                setSortDirection('desc');
+              }}
+              className="bg-gray-100 px-3 py-1.5 md:px-3 md:py-2 text-sm md:text-base rounded hover:bg-gray-200 transition-colors cursor-pointer"
+            >
+              Reset
+            </button>
+          </div>
         </div>
       </div>
       
       {/* Mobile Customers List */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden md:hidden">
-        {loadingCustomers ? (
+        {loadingCustomers || isChangingPage ? (
           <div className="flex justify-center py-6">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-700"></div>
           </div>
-        ) : filteredCustomers.length > 0 ? (
+        ) : customers && customers.length > 0 ? (
           <div className="divide-y divide-gray-200">
-            {filteredCustomers.map((customer) => (
+            {customers.map((customer) => (
               <div 
                 key={customer._id}
                 className="p-3 hover:bg-gray-50 cursor-pointer"
@@ -246,7 +254,9 @@ const Customers = () => {
                 
                 <div className="flex items-start space-x-2 mb-2">
                   <MapPin size={16} className="text-gray-500 mt-0.5 flex-shrink-0" />
-                  <div className="text-xs text-gray-500 truncate">{customer.address}</div>
+                  <div className="text-xs text-gray-500 truncate">
+                    {getDefaultAddress(customer)}
+                  </div>
                 </div>
                 
                 <div className="flex justify-between items-center mt-2">
@@ -290,7 +300,7 @@ const Customers = () => {
           <div className="flex justify-center py-10">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700"></div>
           </div>
-        ) : filteredCustomers.length > 0 ? (
+        ) : customers && customers.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -326,7 +336,7 @@ const Customers = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCustomers.map((customer) => (
+                {customers.map((customer) => (
                   <tr 
                     key={customer._id} 
                     className="hover:bg-gray-50 cursor-pointer"
@@ -343,7 +353,9 @@ const Customers = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{customer.phoneNumber}</div>
-                      <div className="text-sm text-gray-500 truncate max-w-xs">{customer.address}</div>
+                      <div className="text-sm text-gray-500 truncate max-w-xs">
+                        {getDefaultAddress(customer)}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-1">
@@ -382,6 +394,88 @@ const Customers = () => {
           </div>
         )}
       </div>
+      
+      {/* Pagination Controls */}
+      {customersPagination && customersPagination.totalPages > 1 && (
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-lg shadow-sm">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              disabled={currentPage >= customersPagination.totalPages}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
+                <span className="font-medium">
+                  {Math.min(currentPage * itemsPerPage, customersPagination.totalItems)}
+                </span>{' '}
+                of <span className="font-medium">{customersPagination.totalItems}</span> results
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Previous</span>
+                  <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                </button>
+                
+                {/* Page numbers */}
+                {Array.from({ length: Math.min(5, customersPagination.totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (customersPagination.totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= customersPagination.totalPages - 2) {
+                    pageNum = customersPagination.totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === pageNum
+                          ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                
+                <button
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={currentPage >= customersPagination.totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Next</span>
+                  <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Customer Details Modal */}
       {selectedCustomer && (

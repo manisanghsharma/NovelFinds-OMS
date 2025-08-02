@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Search, Filter, Pencil, Trash2, Calculator, Eye, List, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Search, Filter, Pencil, Trash2, Calculator, Eye, List, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import AddBookModal from '../components/books/AddBookModal';
 import EditBookModal from '../components/books/EditBookModal';
 import DeleteConfirmModal from '../components/books/DeleteConfirmModal';
@@ -11,7 +11,7 @@ import AddBatchBooksModal from '../components/books/AddBatchBooksModal';
 
 
 const Inventory = () => {
-  const { books, loadingBooks, fetchBooks } = useAppContext();
+  const { books, booksPagination, loadingBooks, fetchBooks } = useAppContext();
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -24,75 +24,53 @@ const Inventory = () => {
   const [filters, setFilters] = useState({
     status: '',
   });
-  const [filteredBooks, setFilteredBooks] = useState([]);
-  const [sortConfig, setSortConfig] = useState({
-    key: null,
-    direction: null
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortDirection, setSortDirection] = useState('desc');
+  const [isChangingPage, setIsChangingPage] = useState(false);
+  
+  // Debounce search term
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
   useEffect(() => {
-    fetchBooks();
-  }, [fetchBooks]);
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
   
   useEffect(() => {
-    // Filter books based on search term and filters
-    if (!books) return;
+    // Reset to first page when search or filters change
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, filters]);
+  
+  useEffect(() => {
+    // Fetch books with current filters and pagination
+    const fetchBooksWithPagination = async () => {
+      setIsChangingPage(true);
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+        sortField,
+        sortDirection,
+        ...filters
+      };
+      
+      if (debouncedSearchTerm) {
+        params.search = debouncedSearchTerm;
+      }
+      
+      await fetchBooks(params);
+      setIsChangingPage(false);
+    };
     
-    let filtered = [...books];
-    
-    // Apply search filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        book => 
-          book.title.toLowerCase().includes(term) || 
-          (book.author && book.author.toLowerCase().includes(term)) ||
-          (book.isbn && book.isbn.toLowerCase().includes(term))
-      );
-    }
-    
-    // Apply status filter
-    if (filters.status) {
-      filtered = filtered.filter(book => book.status === filters.status);
-    }
-    
-    // Apply sorting if configured
-    if (sortConfig.key && sortConfig.direction) {
-      filtered.sort((a, b) => {
-        let aValue = a[sortConfig.key];
-        let bValue = b[sortConfig.key];
-        
-        // Special handling for dates
-        if (sortConfig.key === 'purchaseDate') {
-          aValue = new Date(aValue).getTime();
-          bValue = new Date(bValue).getTime();
-        }
-        
-        // Handle nulls/undefined values
-        if (aValue === undefined || aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (bValue === undefined || bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
-        
-        // For strings, do case-insensitive comparison
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          aValue = aValue.toLowerCase();
-          bValue = bValue.toLowerCase();
-        }
-        
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    
-    setFilteredBooks(filtered);
-  }, [books, searchTerm, filters, sortConfig]);
+    fetchBooksWithPagination();
+  }, [fetchBooks, currentPage, itemsPerPage, sortField, sortDirection, debouncedSearchTerm, filters]);
   
   const handleFilterChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target;z``
     setFilters(prev => ({
       ...prev,
       [name]: value
@@ -104,35 +82,21 @@ const Inventory = () => {
     setFilters({
       status: '',
     });
-    setSortConfig({
-      key: null,
-      direction: null
-    });
+    setSortField('createdAt'); // Reset sort field
+    setSortDirection('desc'); // Reset sort direction
   };
 
   const handleSort = (key) => {
-    setSortConfig(current => {
-      // If not sorting by this field yet, sort ascending
-      if (current.key !== key) {
-        return { key, direction: 'asc' };
-      }
-      
-      // If already sorting ascending by this field, toggle to descending
-      if (current.direction === 'asc') {
-        return { key, direction: 'desc' };
-      }
-      
-      // If already sorting descending, clear sorting (return to default)
-      return { key: null, direction: null };
-    });
+    setSortField(key);
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
   };
 
   const getSortIcon = (key) => {
-    if (sortConfig.key !== key) {
+    if (sortField !== key) {
       return null;
     }
     
-    return sortConfig.direction === 'asc' 
+    return sortDirection === 'asc' 
       ? <ChevronUp size={14} className="ml-1" /> 
       : <ChevronDown size={14} className="ml-1" />;
   };
@@ -204,38 +168,53 @@ const Inventory = () => {
       
       {/* Search and Filter */}
       <div className="bg-white p-3 md:p-4 rounded-lg shadow-sm">
-        <div className="flex flex-col space-y-2 md:space-y-3">
-          <div className="relative">
+        <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4">
+          <div className="flex-1 relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={14} className="text-gray-400 md:h-4 md:w-4" />
+              <Search size={14} className="text-gray-400" />
             </div>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by title, author, or ISBN"
-              className="block w-full pl-9 pr-3 py-1.5 md:py-2 text-sm md:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="block w-full pl-9 pr-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
           
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+          <div className="flex items-center space-x-2">
+            <Filter size={14} className="text-gray-400" />
+            <select
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+              className="border border-gray-300 rounded-md p-1.5 md:p-2 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">All Status</option>
+              <option value="available">Available</option>
+              <option value="sold">Sold</option>
+            </select>
+            
             <div className="flex items-center space-x-2">
-              <Filter size={14} className="text-gray-400 md:h-4 md:w-4" />
+              <span className="text-sm text-gray-500">Show:</span>
               <select
-                name="status"
-                value={filters.status}
-                onChange={handleFilterChange}
-                className="flex-1 border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(parseInt(e.target.value));
+                  setCurrentPage(1); // Reset to first page when changing items per page
+                }}
+                className="border border-gray-300 rounded-md p-1.5 md:p-2 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
-                <option value="">All Status</option>
-                <option value="available">Available</option>
-                <option value="sold">Sold</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
               </select>
             </div>
             
             <button
               onClick={resetFilters}
-              className="bg-gray-100 px-3 py-1.5 md:px-3 md:py-2 text-sm md:text-base rounded hover:bg-gray-200 transition-colors cursor-pointer"
+              className="bg-gray-100 px-2 py-1.5 md:px-3 md:py-2 text-sm rounded hover:bg-gray-200 transition-colors cursor-pointer"
             >
               Reset
             </button>
@@ -245,13 +224,13 @@ const Inventory = () => {
       
       {/* Books List - Mobile View */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden md:hidden">
-        {loadingBooks ? (
+        {loadingBooks || isChangingPage ? (
           <div className="flex justify-center py-6 md:py-8">
             <div className="animate-spin rounded-full h-8 w-8 md:h-10 md:w-10 border-b-2 border-indigo-700"></div>
           </div>
-        ) : filteredBooks.length > 0 ? (
+        ) : books && books.length > 0 ? (
           <div className="divide-y divide-gray-200">
-            {filteredBooks.map((book) => (
+            {books.map((book) => (
               <div 
                 key={book._id}
                 className="p-3 hover:bg-gray-50 cursor-pointer"
@@ -315,11 +294,11 @@ const Inventory = () => {
       
       {/* Books Table - Desktop View */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden hidden md:block">
-        {loadingBooks ? (
+        {loadingBooks || isChangingPage ? (
           <div className="flex justify-center py-10">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700"></div>
           </div>
-        ) : filteredBooks.length > 0 ? (
+        ) : books && books.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -373,7 +352,7 @@ const Inventory = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredBooks.map((book) => (
+                {books.map((book) => (
                   <tr 
                     key={book._id} 
                     className="hover:bg-gray-50 cursor-pointer"
@@ -433,6 +412,88 @@ const Inventory = () => {
           </div>
         )}
       </div>
+      
+      {/* Pagination Controls */}
+      {booksPagination && booksPagination.totalPages > 1 && (
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-lg shadow-sm">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              disabled={currentPage >= booksPagination.totalPages}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
+                <span className="font-medium">
+                  {Math.min(currentPage * itemsPerPage, booksPagination.totalItems)}
+                </span>{' '}
+                of <span className="font-medium">{booksPagination.totalItems}</span> results
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Previous</span>
+                  <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                </button>
+                
+                {/* Page numbers */}
+                {Array.from({ length: Math.min(5, booksPagination.totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (booksPagination.totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= booksPagination.totalPages - 2) {
+                    pageNum = booksPagination.totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === pageNum
+                          ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                
+                <button
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={currentPage >= booksPagination.totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Next</span>
+                  <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Modals */}
       <AddBookModal isOpen={showAddModal} onClose={(shouldReload) => handleModalClose(shouldReload)} />

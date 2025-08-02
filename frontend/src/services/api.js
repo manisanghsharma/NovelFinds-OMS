@@ -1,18 +1,23 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
-// const API_URL = 'http://localhost:5002/api';
-const API_URL = "https://novelfindsomsbackend2-production.up.railway.app/api";
+const API_URL = 'http://localhost:5002/api';
+// const API_URL = "https://novelfindsomsbackend2-production.up.railway.app/api";
 // const API_URL = "https://novelfindsbackend.onrender.com/api";
 
 // Book API calls
 export const bookApi = {
   getBooks: async (filters = {}) => {
-    const { status } = filters;
+    const { status, page, limit, search, sortField, sortDirection } = filters;
     let url = `${API_URL}/books`;
     
     // Add query parameters if provided
     const params = new URLSearchParams();
     if (status) params.append('status', status);
+    if (page) params.append('page', page);
+    if (limit) params.append('limit', limit);
+    if (search) params.append('search', search);
+    if (sortField) params.append('sortField', sortField);
+    if (sortDirection) params.append('sortDirection', sortDirection);
     
     const queryString = params.toString();
     if (queryString) url += `?${queryString}`;
@@ -44,8 +49,22 @@ export const bookApi = {
 
 // Customer API calls
 export const customerApi = {
-  getCustomers: async () => {
-    const response = await axios.get(`${API_URL}/customers`);
+  getCustomers: async (filters = {}) => {
+    const { page, limit, search, sortField, sortDirection } = filters;
+    let url = `${API_URL}/customers`;
+    
+    // Add query parameters if provided
+    const params = new URLSearchParams();
+    if (page) params.append('page', page);
+    if (limit) params.append('limit', limit);
+    if (search) params.append('search', search);
+    if (sortField) params.append('sortField', sortField);
+    if (sortDirection) params.append('sortDirection', sortDirection);
+    
+    const queryString = params.toString();
+    if (queryString) url += `?${queryString}`;
+    
+    const response = await axios.get(url);
     return response.data;
   },
   
@@ -72,13 +91,42 @@ export const customerApi = {
   searchCustomers: async (query) => {
     const response = await axios.get(`${API_URL}/customers/search?query=${query}`);
     return response.data;
+  },
+  
+  // Address management functions
+  addCustomerAddress: async (customerId, addressData) => {
+    const response = await axios.post(`${API_URL}/customers/${customerId}/addresses`, addressData);
+    return response.data;
+  },
+  
+  updateCustomerAddress: async (customerId, addressId, addressData) => {
+    const response = await axios.put(`${API_URL}/customers/${customerId}/addresses/${addressId}`, addressData);
+    return response.data;
+  },
+  
+  deleteCustomerAddress: async (customerId, addressId) => {
+    const response = await axios.delete(`${API_URL}/customers/${customerId}/addresses/${addressId}`);
+    return response.data;
   }
 };
 
 // Order API calls
 export const orderApi = {
-  getOrders: async () => {
-    const response = await axios.get(`${API_URL}/orders`);
+  getOrders: async (filters = {}) => {
+    const { page, limit, search, status } = filters;
+    let url = `${API_URL}/orders`;
+    
+    // Add query parameters if provided
+    const params = new URLSearchParams();
+    if (page) params.append('page', page);
+    if (limit) params.append('limit', limit);
+    if (search) params.append('search', search);
+    if (status) params.append('status', status);
+    
+    const queryString = params.toString();
+    if (queryString) url += `?${queryString}`;
+    
+    const response = await axios.get(url);
     return response.data;
   },
   
@@ -230,4 +278,4 @@ export const uploadApi = {
     // imgbb returns the image URL in response.data.data.url
     return response.data.data.url;
   }
-}; 
+};

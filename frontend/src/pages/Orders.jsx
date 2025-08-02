@@ -1,12 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Plus, Search, Filter, Pencil, Truck, Trash2, Eye, User, ChevronUp, ChevronDown, Download } from 'lucide-react';
+import { Plus, Search, Filter, Pencil, Truck, Trash2, Eye, User, ChevronUp, ChevronDown, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import AddOrderModal from '../components/orders/AddOrderModal';
 import ShippingModal from '../components/orders/ShippingModal';
 import EditOrderModal from '../components/orders/EditOrderModal';
 import DeleteOrderModal from '../components/orders/DeleteOrderModal';
 import ViewOrderModal from '../components/orders/ViewOrderModal';
 import { orderApi } from '../services/api';
+
+// Helper function to highlight search matches
+const highlightMatch = (text, searchTerm) => {
+  if (!searchTerm || !text) return text;
+  
+  const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+  
+  return parts.map((part, index) => 
+    regex.test(part) ? (
+      <span key={index} className="bg-yellow-200 font-semibold px-1 rounded">
+        {part}
+      </span>
+    ) : part
+  );
+};
 
 // Profile Image component that generates avatars based on customer name
 const ProfileImage = ({ name, size = 'small' }) => {
@@ -71,7 +87,7 @@ const ProfileImage = ({ name, size = 'small' }) => {
 };
 
 const Orders = () => {
-  const { orders, loadingOrders, fetchOrders } = useAppContext();
+  const { orders, ordersPagination, loadingOrders, fetchOrders } = useAppContext();
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showShippingModal, setShowShippingModal] = useState(false);
@@ -81,109 +97,63 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [filteredOrders, setFilteredOrders] = useState([]);
-  const [sortConfig, setSortConfig] = useState({
-    key: null,
-    direction: null
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [sortField, setSortField] = useState('orderDate');
+  const [sortDirection, setSortDirection] = useState('desc');
+  const [isChangingPage, setIsChangingPage] = useState(false);
   const [downloadingLabels, setDownloadingLabels] = useState(false);
   
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+  // Debounce search term
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
   useEffect(() => {
-    // Filter orders based on search term and status filter
-    if (!orders) return;
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
     
-    let filtered = [...orders];
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  
+  useEffect(() => {
+    // Reset to first page when search or filters change
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, statusFilter]);
+  
+  useEffect(() => {
+    // Fetch orders with current filters and pagination
+    const fetchOrdersWithPagination = async () => {
+      setIsChangingPage(true);
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+        sortField,
+        sortDirection,
+        status: statusFilter
+      };
+      
+      if (debouncedSearchTerm) {
+        params.search = debouncedSearchTerm;
+      }
+      
+      await fetchOrders(params);
+      setIsChangingPage(false);
+    };
     
-    // Apply search filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        order => 
-          order.customer?.name?.toLowerCase().includes(term) || 
-          order.customer?.socialHandle?.toLowerCase().includes(term)
-      );
-    }
-    
-    // Apply status filter
-    if (statusFilter) {
-      filtered = filtered.filter(order => order.status === statusFilter);
-    }
-    
-    // Apply sorting if configured
-    if (sortConfig.key && sortConfig.direction) {
-      filtered.sort((a, b) => {
-        let aValue = a[sortConfig.key];
-        let bValue = b[sortConfig.key];
-        
-        // Special handling for nested properties
-        if (sortConfig.key === 'customer.name') {
-          aValue = a.customer?.name;
-          bValue = b.customer?.name;
-        } else if (sortConfig.key === 'customer.socialHandle') {
-          aValue = a.customer?.socialHandle;
-          bValue = b.customer?.socialHandle;
-        } else if (sortConfig.key === 'orderDate') {
-          aValue = new Date(aValue).getTime();
-          bValue = new Date(bValue).getTime();
-        } else if (sortConfig.key === 'bookCount') {
-          // Calculate total book quantity including multiple quantities
-          aValue = a.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) || 0;
-          bValue = b.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) || 0;
-        }
-        
-        // Handle nulls/undefined values
-        if (aValue === undefined || aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (bValue === undefined || bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
-        
-        // For strings, do case-insensitive comparison
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          aValue = aValue.toLowerCase();
-          bValue = bValue.toLowerCase();
-        }
-        
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    } else {
-      // Default sort by date (newest first) if no sorting is configured
-      filtered.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
-    }
-    
-    setFilteredOrders(filtered);
-  }, [orders, searchTerm, statusFilter, sortConfig]);
+    fetchOrdersWithPagination();
+  }, [fetchOrders, currentPage, itemsPerPage, sortField, sortDirection, debouncedSearchTerm, statusFilter]);
   
   const handleSort = (key) => {
-    setSortConfig(current => {
-      // If not sorting by this field yet, sort ascending
-      if (current.key !== key) {
-        return { key, direction: 'asc' };
-      }
-      
-      // If already sorting ascending by this field, toggle to descending
-      if (current.direction === 'asc') {
-        return { key, direction: 'desc' };
-      }
-      
-      // If already sorting descending, clear sorting (return to default)
-      return { key: null, direction: null };
-    });
+    setSortField(key);
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
   };
 
   const getSortIcon = (key) => {
-    if (sortConfig.key !== key) {
+    if (sortField !== key) {
       return null;
     }
     
-    return sortConfig.direction === 'asc' 
+    return sortDirection === 'asc' 
       ? <ChevronUp size={14} className="ml-1" /> 
       : <ChevronDown size={14} className="ml-1" />;
   };
@@ -225,10 +195,8 @@ const Orders = () => {
   const resetFilters = () => {
     setSearchTerm('');
     setStatusFilter('');
-    setSortConfig({
-      key: null,
-      direction: null
-    });
+    setSortField('orderDate'); // Reset sort field
+    setSortDirection('desc'); // Reset sort direction
   };
   
   const handleDownloadLabels = async () => {
@@ -313,7 +281,7 @@ const Orders = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name or social handle"
+              placeholder="Search by customer name, social handle, or book title/author"
               className="block w-full pl-9 pr-3 py-1.5 md:py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
@@ -332,6 +300,23 @@ const Orders = () => {
               <option value="Delivered">Delivered</option>
             </select>
             
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500">Show:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(parseInt(e.target.value));
+                  setCurrentPage(1); // Reset to first page when changing items per page
+                }}
+                className="border border-gray-300 rounded-md p-1.5 md:p-2 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+            
             <button
               onClick={resetFilters}
               className="bg-gray-100 px-2 py-1.5 md:px-3 md:py-2 text-sm rounded hover:bg-gray-200 transition-colors cursor-pointer"
@@ -344,13 +329,13 @@ const Orders = () => {
       
       {/* Orders List - Mobile View */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden md:hidden">
-        {loadingOrders ? (
+        {loadingOrders || isChangingPage ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-700"></div>
           </div>
-        ) : filteredOrders.length > 0 ? (
+        ) : orders && orders.length > 0 ? (
           <div className="divide-y divide-gray-200">
-            {filteredOrders.map((order) => (
+            {orders.map((order) => (
               <div 
                 key={order._id}
                 className="p-3 hover:bg-gray-50 cursor-pointer"
@@ -360,8 +345,12 @@ const Orders = () => {
                   <div className="flex items-center">
                     <ProfileImage name={order.customer?.name} />
                     <div className="ml-2">
-                      <div className="text-sm font-medium text-gray-900">{order.customer?.name}</div>
-                      <div className="text-xs text-gray-500">{order.customer?.socialHandle}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {highlightMatch(order.customer?.name, searchTerm)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {highlightMatch(order.customer?.socialHandle, searchTerm)}
+                      </div>
                     </div>
                   </div>
                   <div className="text-xs text-gray-500">
@@ -374,6 +363,34 @@ const Orders = () => {
                     <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
                       {order.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) || 0} {order.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) === 1 ? 'Book' : 'Books'}
                     </span>
+                    {/* Show book matches if any */}
+                    {searchTerm && order.books?.some(bookItem => 
+                      bookItem.book?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      bookItem.book?.author?.toLowerCase().includes(searchTerm.toLowerCase())
+                    ) && (
+                      <div className="mt-1 text-xs text-gray-600">
+                        <span className="font-medium">Books: </span>
+                        {order.books?.map((bookItem, index) => {
+                          const book = bookItem.book;
+                          const isTitleMatch = book?.title?.toLowerCase().includes(searchTerm.toLowerCase());
+                          const isAuthorMatch = book?.author?.toLowerCase().includes(searchTerm.toLowerCase());
+                          
+                          if (isTitleMatch || isAuthorMatch) {
+                            return (
+                              <span key={book._id} className="inline-block mr-2">
+                                {isTitleMatch && highlightMatch(book.title, searchTerm)}
+                                {isAuthorMatch && !isTitleMatch && (
+                                  <span>
+                                    by {highlightMatch(book.author, searchTerm)}
+                                  </span>
+                                )}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="text-sm font-medium text-gray-700">₹{order.amountReceived?.toFixed(2) || '0.00'}</div>
@@ -433,11 +450,11 @@ const Orders = () => {
       
       {/* Orders Table - Desktop View */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden hidden md:block">
-        {loadingOrders ? (
+        {loadingOrders || isChangingPage ? (
           <div className="flex justify-center py-10">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700"></div>
           </div>
-        ) : filteredOrders.length > 0 ? (
+        ) : orders && orders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -500,7 +517,7 @@ const Orders = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredOrders.map((order) => (
+                {orders.map((order) => (
                   <tr 
                     key={order._id} 
                     className="hover:bg-gray-50 cursor-pointer" 
@@ -513,8 +530,12 @@ const Orders = () => {
                       <div className="flex items-center">
                         <ProfileImage name={order.customer?.name} />
                         <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900">{order.customer?.name}</div>
-                          <div className="text-sm text-gray-500">{order.customer?.socialHandle}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {highlightMatch(order.customer?.name, searchTerm)}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {highlightMatch(order.customer?.socialHandle, searchTerm)}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -522,6 +543,33 @@ const Orders = () => {
                       <span className="px-3 py-1 inline-flex text-sm leading-5 font-medium rounded-full bg-indigo-50 text-indigo-700">
                         {order.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) || 0} {order.books?.reduce((sum, book) => sum + (book.quantity || 1), 0) === 1 ? 'Book' : 'Books'}
                       </span>
+                      {/* Show book matches if any */}
+                      {searchTerm && order.books?.some(bookItem => 
+                        bookItem.book?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        bookItem.book?.author?.toLowerCase().includes(searchTerm.toLowerCase())
+                      ) && (
+                        <div className="mt-1 text-xs text-gray-600">
+                          {order.books?.map((bookItem, index) => {
+                            const book = bookItem.book;
+                            const isTitleMatch = book?.title?.toLowerCase().includes(searchTerm.toLowerCase());
+                            const isAuthorMatch = book?.author?.toLowerCase().includes(searchTerm.toLowerCase());
+                            
+                            if (isTitleMatch || isAuthorMatch) {
+                              return (
+                                <div key={book._id} className="text-xs">
+                                  {isTitleMatch && highlightMatch(book.title, searchTerm)}
+                                  {isAuthorMatch && !isTitleMatch && (
+                                    <span>
+                                      by {highlightMatch(book.author, searchTerm)}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                       ₹{order.amountReceived?.toFixed(2) || '0.00'}
@@ -581,6 +629,88 @@ const Orders = () => {
           </div>
         )}
       </div>
+      
+      {/* Pagination Controls */}
+      {ordersPagination && ordersPagination.totalPages > 1 && (
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-lg shadow-sm">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              disabled={currentPage >= ordersPagination.totalPages}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> to{' '}
+                <span className="font-medium">
+                  {Math.min(currentPage * itemsPerPage, ordersPagination.totalItems)}
+                </span>{' '}
+                of <span className="font-medium">{ordersPagination.totalItems}</span> results
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Previous</span>
+                  <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                </button>
+                
+                {/* Page numbers */}
+                {Array.from({ length: Math.min(5, ordersPagination.totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (ordersPagination.totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= ordersPagination.totalPages - 2) {
+                    pageNum = ordersPagination.totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === pageNum
+                          ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                
+                <button
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={currentPage >= ordersPagination.totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Next</span>
+                  <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Modals */}
       <AddOrderModal isOpen={showAddModal} onClose={handleModalClose} />

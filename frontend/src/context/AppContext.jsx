@@ -10,14 +10,17 @@ export const AppProvider = ({ children }) => {
   const [books, setBooks] = useState([]);
   const [availableBooks, setAvailableBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(false);
+  const [booksPagination, setBooksPagination] = useState(null);
   
   // State for customers
   const [customers, setCustomers] = useState([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [customersPagination, setCustomersPagination] = useState(null);
   
   // State for orders
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [ordersPagination, setOrdersPagination] = useState(null);
   
   // State for analytics
   const [inventorySummary, setInventorySummary] = useState(null);
@@ -58,7 +61,17 @@ export const AppProvider = ({ children }) => {
     setLoadingBooks(true);
     try {
       const data = await bookApi.getBooks(filters);
-      setBooks(data);
+      
+      // Handle pagination data if present
+      if (data.books && data.pagination) {
+        setBooks(data.books);
+        setBooksPagination(data.pagination);
+      } else {
+        // Handle non-paginated response (backward compatibility)
+        setBooks(data);
+        setBooksPagination(null);
+      }
+      
       return data;
     } catch (error) {
       console.error('Error fetching books:', error);
@@ -82,11 +95,21 @@ export const AppProvider = ({ children }) => {
   }, []);
   
   // Fetch customers
-  const fetchCustomers = useCallback(async () => {
+  const fetchCustomers = useCallback(async (filters = {}) => {
     setLoadingCustomers(true);
     try {
-      const data = await customerApi.getCustomers();
-      setCustomers(data);
+      const data = await customerApi.getCustomers(filters);
+      
+      // Handle pagination data if present
+      if (data.customers && data.pagination) {
+        setCustomers(data.customers);
+        setCustomersPagination(data.pagination);
+      } else {
+        // Handle non-paginated response (backward compatibility)
+        setCustomers(data);
+        setCustomersPagination(null);
+      }
+      
       return data;
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -107,11 +130,21 @@ export const AppProvider = ({ children }) => {
   };
   
   // Fetch orders
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (filters = {}) => {
     setLoadingOrders(true);
     try {
-      const data = await orderApi.getOrders();
-      setOrders(data);
+      const data = await orderApi.getOrders(filters);
+      
+      // Handle pagination data if present
+      if (data.orders && data.pagination) {
+        setOrders(data.orders);
+        setOrdersPagination(data.pagination);
+      } else {
+        // Handle non-paginated response (backward compatibility)
+        setOrders(data);
+        setOrdersPagination(null);
+      }
+      
       return data;
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -286,6 +319,54 @@ export const AppProvider = ({ children }) => {
     }
   };
   
+  // Add address to customer
+  const addCustomerAddress = async (customerId, addressData) => {
+    try {
+      const updatedCustomer = await customerApi.addCustomerAddress(customerId, addressData);
+      setCustomers(prevCustomers => 
+        prevCustomers.map(customer => 
+          customer._id === customerId ? updatedCustomer : customer
+        )
+      );
+      return updatedCustomer;
+    } catch (error) {
+      console.error('Error adding customer address:', error);
+      throw error;
+    }
+  };
+  
+  // Update customer address
+  const updateCustomerAddress = async (customerId, addressId, addressData) => {
+    try {
+      const updatedCustomer = await customerApi.updateCustomerAddress(customerId, addressId, addressData);
+      setCustomers(prevCustomers => 
+        prevCustomers.map(customer => 
+          customer._id === customerId ? updatedCustomer : customer
+        )
+      );
+      return updatedCustomer;
+    } catch (error) {
+      console.error('Error updating customer address:', error);
+      throw error;
+    }
+  };
+  
+  // Delete customer address
+  const deleteCustomerAddress = async (customerId, addressId) => {
+    try {
+      const updatedCustomer = await customerApi.deleteCustomerAddress(customerId, addressId);
+      setCustomers(prevCustomers => 
+        prevCustomers.map(customer => 
+          customer._id === customerId ? updatedCustomer : customer
+        )
+      );
+      return updatedCustomer;
+    } catch (error) {
+      console.error('Error deleting customer address:', error);
+      throw error;
+    }
+  };
+  
   // Create a new order
   const createOrder = async (orderData) => {
     try {
@@ -433,8 +514,11 @@ export const AppProvider = ({ children }) => {
   const value = {
     books,
     availableBooks,
+    booksPagination,
     customers,
+    customersPagination,
     orders,
+    ordersPagination,
     inventorySummary,
     monthlySalesData,
     genreBreakdown,
@@ -463,6 +547,9 @@ export const AppProvider = ({ children }) => {
     createCustomer,
     updateCustomer,
     deleteCustomer,
+    addCustomerAddress,
+    updateCustomerAddress,
+    deleteCustomerAddress,
     createOrder,
     updateOrderShipping,
     updateOrder,

@@ -149,11 +149,46 @@ const CustomerDetailsModal = ({ isOpen, onClose, customer }) => {
             </div>
             
             <div className="space-y-3 md:space-y-4">
-              <h3 className="text-base md:text-lg font-medium text-gray-800 border-b pb-2">Address</h3>
-              <div className="flex items-start space-x-2">
-                <MapPin size={18} className="text-indigo-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm md:text-base font-medium whitespace-pre-line">{customer.address}</div>
-              </div>
+              <h3 className="text-base md:text-lg font-medium text-gray-800 border-b pb-2">Addresses</h3>
+              
+              {customer.addresses && customer.addresses.length > 0 ? (
+                <div className="space-y-2">
+                  {customer.addresses.map((address, index) => (
+                    <div
+                      key={address._id || index}
+                      className={`p-2 border rounded-md ${
+                        address.isDefault ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-start space-x-2">
+                        <MapPin size={16} className="text-indigo-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span className="text-sm font-medium text-gray-900">
+                              {address.label}
+                            </span>
+                            {address.isDefault && (
+                              <span className="px-1.5 py-0.5 text-xs bg-indigo-100 text-indigo-800 rounded-full">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-600 whitespace-pre-line">
+                            {address.address}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-start space-x-2">
+                  <MapPin size={18} className="text-indigo-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm md:text-base font-medium whitespace-pre-line">
+                    {customer.address || 'No address available'}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           

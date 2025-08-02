@@ -155,8 +155,18 @@ const ViewOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
 							</div>
 							<div className='flex items-start space-x-2'>
 								<MapPin size={16} className='text-indigo-600 mt-0.5' />
-								<div className='text-sm md:text-base font-medium whitespace-pre-line'>
-									{orderData.customer?.address || "No address provided"}
+								<div>
+									{orderData.shippingAddress?.address ? (
+										<>
+											<div className='text-sm md:text-base font-medium whitespace-pre-line'>
+												{orderData.shippingAddress.address}
+											</div>
+										</>
+									) : (
+										<div className='text-sm md:text-base font-medium whitespace-pre-line'>
+											{orderData.customer?.address || "No address provided"}
+										</div>
+									)}
 								</div>
 							</div>
 						</div>

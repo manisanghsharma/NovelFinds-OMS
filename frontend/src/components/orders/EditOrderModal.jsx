@@ -102,7 +102,7 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
       if (order.customer) {
         setSelectedCustomer(order.customer);
         setValue('customerName', order.customer.name || '');
-        setValue('customerAddress', order.customer.address || '');
+        setValue('customerAddress', order.shippingAddress?.address || order.customer.address || '');
         setValue('customerPhone', order.customer.phoneNumber || '');
         setValue('customerOtherPhone', order.customer.otherPhone || '');
         setValue('customerSocial', order.customer.socialHandle || '');
@@ -290,7 +290,17 @@ const EditOrderModal = ({ isOpen, onClose, order: initialOrder }) => {
   const handleSelectCustomer = (customer) => {
     setSelectedCustomer(customer);
     setValue('customerName', customer.name || '');
-    setValue('customerAddress', customer.address || '');
+    
+    // Get default address from addresses array
+    let defaultAddress = '';
+    if (customer.addresses && customer.addresses.length > 0) {
+      const defaultAddr = customer.addresses.find(addr => addr.isDefault);
+      defaultAddress = defaultAddr?.address || customer.addresses[0].address;
+    } else {
+      defaultAddress = customer.address || '';
+    }
+    
+    setValue('customerAddress', defaultAddress);
     setValue('customerPhone', customer.phoneNumber || '');
     setValue('customerOtherPhone', customer.otherPhone || '');
     setValue('customerSocial', customer.socialHandle || '');

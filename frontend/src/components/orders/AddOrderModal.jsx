@@ -28,6 +28,9 @@ const AddOrderModal = ({ isOpen, onClose }) => {
   const [bookSearchTerm, setBookSearchTerm] = useState('');
   const [isShippingEditable, setIsShippingEditable] = useState(false);
   const [manualShippingCost, setManualShippingCost] = useState(0);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [customAddress, setCustomAddress] = useState('');
+  const [useCustomAddress, setUseCustomAddress] = useState(false);
   
   // Calculate shipping cost based on weight in kg
   const calculateShippingCost = (weightKg) => {
@@ -102,14 +105,24 @@ const AddOrderModal = ({ isOpen, onClose }) => {
     }
   };
   
-  // Handle customer selection
+  // Handle customer selection with address setup
   const handleSelectCustomer = (customer) => {
     setSelectedCustomer(customer);
     setValue('customerName', customer.name);
-    setValue('customerAddress', customer.address);
     setValue('customerPhone', customer.phoneNumber);
     setValue('customerOtherPhone', customer.otherPhone || '');
     setValue('customerSocial', customer.socialHandle);
+    
+    // Set default address if customer has addresses
+    if (customer.addresses && customer.addresses.length > 0) {
+      const defaultAddress = customer.addresses.find(addr => addr.isDefault) || customer.addresses[0];
+      setSelectedAddress(defaultAddress);
+      setValue('customerAddress', defaultAddress.address);
+    } else {
+      setSelectedAddress(null);
+      setValue('customerAddress', '');
+    }
+    
     setSearchResults([]);
     setSearchTerm('');
   };
@@ -211,6 +224,28 @@ const AddOrderModal = ({ isOpen, onClose }) => {
         customerId = createdCustomer._id;
       }
       
+      // Prepare shipping address
+      let shippingAddress = null;
+      if (selectedCustomer && selectedAddress) {
+        // Use selected address from existing customer
+        shippingAddress = {
+          address: selectedAddress.address,
+          label: selectedAddress.label
+        };
+      } else if (useCustomAddress && customAddress) {
+        // Use custom address
+        shippingAddress = {
+          address: customAddress,
+          label: 'Custom'
+        };
+      } else if (data.customerAddress) {
+        // Use address from form (for new customers)
+        shippingAddress = {
+          address: data.customerAddress,
+          label: 'Home'
+        };
+      }
+      
       // Prepare order data with book quantities
       const bookOrders = selectedBooks.map(book => ({
         bookId: book._id,
@@ -223,7 +258,8 @@ const AddOrderModal = ({ isOpen, onClose }) => {
         bookOrders,
         amountReceived: parseFloat(data.amountReceived),
         status: data.status,
-        shippingCost: shippingCost
+        shippingCost: shippingCost,
+        shippingAddress
       };
       
       await createOrder(orderData);
@@ -232,6 +268,9 @@ const AddOrderModal = ({ isOpen, onClose }) => {
       setSelectedBooks([]);
       setBookQuantities({});
       setSelectedCustomer(null);
+      setSelectedAddress(null);
+      setCustomAddress('');
+      setUseCustomAddress(false);
       onClose();
       
     } catch (error) {
@@ -399,24 +438,141 @@ const AddOrderModal = ({ isOpen, onClose }) => {
 							</div>
 						</div>
 
-						<div className='mt-3 md:mt-4'>
-							<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>
-								Address <span className='text-red-500'>*</span>
-							</label>
-							<textarea
-								{...register("customerAddress", {
-									required: "Address is required",
-								})}
-								rows={2}
-								className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
-								placeholder='Enter complete delivery address'
-							/>
-							{errors.customerAddress && (
-								<p className='mt-1 text-xs md:text-sm text-red-600'>
-									{errors.customerAddress.message}
-								</p>
-							)}
-						</div>
+						{/* Address Selection for Existing Customers */}
+						{selectedCustomer && selectedCustomer.addresses && selectedCustomer.addresses.length > 0 && (
+							<div className='border-b pb-3 md:pb-4'>
+								<h3 className='text-base md:text-lg font-medium text-gray-800 mb-3 md:mb-4'>
+									Shipping Address
+								</h3>
+								
+								<div className='space-y-3 md:space-y-4'>
+									{/* Address Selection */}
+									<div>
+										<label className='block text-gray-700 text-sm md:text-base mb-2'>
+											Select Address
+										</label>
+										<div className='space-y-2'>
+											{selectedCustomer.addresses.map((address) => (
+												<div
+													key={address._id}
+													className={`p-3 border rounded-md cursor-pointer transition-colors ${
+														selectedAddress?._id === address._id
+															? 'border-indigo-500 bg-indigo-50'
+															: 'border-gray-300 hover:border-gray-400'
+													}`}
+													onClick={() => {
+														setSelectedAddress(address);
+														setValue('customerAddress', address.address);
+														setUseCustomAddress(false);
+													}}
+												>
+													<div className='flex items-center justify-between'>
+														<div className='flex-1'>
+															<div className='flex items-center space-x-2'>
+																<span className='text-sm font-medium text-gray-900'>
+																	{address.label}
+																</span>
+																{address.isDefault && (
+																	<span className='px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full'>
+																		Default
+																	</span>
+																)}
+															</div>
+															<div className='text-sm text-gray-600 mt-1'>
+																{address.address}
+															</div>
+														</div>
+														<div className='ml-2'>
+															<input
+																type='radio'
+																name='address'
+																checked={selectedAddress?._id === address._id}
+																onChange={() => {}}
+																className='h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300'
+															/>
+														</div>
+													</div>
+												</div>
+											))}
+											
+											{/* Custom Address Option */}
+											<div
+												className={`p-3 border rounded-md cursor-pointer transition-colors ${
+													useCustomAddress
+														? 'border-indigo-500 bg-indigo-50'
+														: 'border-gray-300 hover:border-gray-400'
+												}`}
+												onClick={() => {
+													setUseCustomAddress(true);
+													setSelectedAddress(null);
+												}}
+											>
+												<div className='flex items-center justify-between'>
+													<div className='flex-1'>
+														<div className='text-sm font-medium text-gray-900'>
+															Custom Address
+														</div>
+														<div className='text-sm text-gray-600 mt-1'>
+															Enter a new address for this order
+														</div>
+													</div>
+													<div className='ml-2'>
+														<input
+															type='radio'
+															name='address'
+															checked={useCustomAddress}
+															onChange={() => {}}
+															className='h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300'
+														/>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									
+									{/* Custom Address Input */}
+									{useCustomAddress && (
+										<div>
+											<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>
+												Custom Address <span className='text-red-500'>*</span>
+											</label>
+											<textarea
+												value={customAddress}
+												onChange={(e) => {
+													setCustomAddress(e.target.value);
+													setValue('customerAddress', e.target.value);
+												}}
+												rows={3}
+												className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+												placeholder='Enter the shipping address for this order'
+											/>
+										</div>
+									)}
+								</div>
+							</div>
+						)}
+						
+						{/* Address Field for New Customers or when no addresses exist */}
+						{(!selectedCustomer || !selectedCustomer.addresses || selectedCustomer.addresses.length === 0) && (
+							<div className='mt-3 md:mt-4'>
+								<label className='block text-gray-700 text-sm md:text-base mb-1 md:mb-2'>
+									Address <span className='text-red-500'>*</span>
+								</label>
+								<textarea
+									{...register("customerAddress", {
+										required: "Address is required",
+									})}
+									rows={2}
+									className='w-full border border-gray-300 rounded-md p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500'
+									placeholder='Enter complete delivery address'
+								/>
+								{errors.customerAddress && (
+									<p className='mt-1 text-xs md:text-sm text-red-600'>
+										{errors.customerAddress.message}
+									</p>
+								)}
+							</div>
+						)}
 					</div>
 
 					{/* Book Selection */}
