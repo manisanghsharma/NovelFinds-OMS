@@ -1,7 +1,7 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
-const API_URL = 'http://localhost:5002/api';
-// const API_URL = "https://novelfindsomsbackend2-production.up.railway.app/api";
+// const API_URL = 'http://localhost:5002/api';
+const API_URL = "https://novelfindsomsbackend2-production.up.railway.app/api";
 // const API_URL = "https://novelfindsbackend.onrender.com/api";
 
 // Book API calls
